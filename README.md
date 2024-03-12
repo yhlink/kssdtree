@@ -102,7 +102,7 @@ import kssdtree
 kssdtree.sketch(shuffle='L3K9.shuf', genomes='gtdbr214', output='gtdbr214_sketch', set_opt=True)
 kssdtree.sketch(shuffle='L3K9.shuf', genomes='PROK1', output='PROK1_sketch', set_opt=True)
 
-# step2、retrieving N closest sketches from GTDB (R214) sketches, combining PROK1_sketch
+# step2、retrieving 30 closest sketches from GTDB (R214) sketches, combining PROK1_sketch
 kssdtree.retrieve(ref_sketch='gtdbr214_sketch', qry_sketch='PROK1_sketch', output='PROK31_sketch', N=30)
 
 # step3、calculating distance matrix
@@ -118,6 +118,7 @@ kssdtree.visualize(newick='PROK31.newick', mode='r')
 kssdtree.quick(shuffle='L3K9.shuf', genomes='PROK1', output='PROK31.newick', reference='gtdbr214', method='nj', mode='r', N=30)
 
 ```
+More usages about Kssdtree, please see Kssdtree user manual.
  
 
 
