@@ -1,1 +1,1 @@
-from .kssdtree import sketch, dist, build, visualize, quick, union, subtract, extract, group, combine
+from .kssdtree import sketch, dist, build, visualize, quick, subtract, retrieve

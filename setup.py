@@ -93,7 +93,7 @@ require_pakages = [
 
 setup(
     name='kssdtree',
-    version='1.0.8',
+    version='1.1.0',
     author='Hang Yang',
     author_email='yhlink1207@gmail.com',
     description="Kssdtree is a versatile Python package for phylogenetic analysis. It also provides one-stop tree construction and visualization. It can handle DNA sequences of both fasta or fastq format, whether gzipped or not. ",

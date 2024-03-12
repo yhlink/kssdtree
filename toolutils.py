@@ -4,6 +4,7 @@ import os
 import requests
 import json
 import zipfile
+import pandas as pd
 
 
 def allowed_file(filename):
@@ -169,8 +170,18 @@ def view_tree(newick, taxonomy, mode):
             f.write(lines)
         unique_species = list(set(known_species))
         species_colors = {}
+
+        temp_color1s = ['#9987ce', '#63b2ee']
+        temp_color2s = ['#9987ce', '#63b2ee', '#76da91']
         for i in range(len(unique_species)):
-            species_colors[unique_species[i]] = randomcolor()
+            if len(unique_species) == 1:
+                species_colors[unique_species[i]] = '#9987ce'
+            elif len(unique_species) == 2:
+                species_colors[unique_species[i]] = temp_color1s[i]
+            elif len(unique_species) == 3:
+                species_colors[unique_species[i]] = temp_color2s[i]
+            else:
+                species_colors[unique_species[i]] = randomcolor()
         species_colors = dict(sorted(species_colors.items(), key=operator.itemgetter(0)))
         t = PhyloTree(temp_nwk, sp_naming_function=None)
         for n in t.traverse():
@@ -207,3 +218,107 @@ def view_tree(newick, taxonomy, mode):
                 node.set_style(nst)
         # t.render("bubble_map.png", w=600, dpi=300, tree_style=ts)
         t.show(tree_style=ts)
+
+
+def deal_gtdb_txt(temp_dist_output):
+    data = pd.read_csv(temp_dist_output, delimiter='\t', header=None, skiprows=1)
+    column_2 = data.iloc[:, 1]
+    with open('new.txt', 'w') as file:
+        for item in column_2:
+            file.write(str(item) + '\n')
+    with open('new.txt', 'r') as file:
+        txt1_contents = file.read().splitlines()
+    with open('gtdb.txt', 'r') as file:
+        txt2_contents = file.read().splitlines()
+    txt1_dict = {word: index for index, word in enumerate(txt1_contents)}
+    result = []
+    count = 0
+    for word in txt2_contents:
+        if word in txt1_dict:
+            count += 1
+            result.append(f"{count} {word}")
+        else:
+            result.append(f"0 {word}")
+    with open('new_gtdb.txt', 'w') as file:
+        for line in result:
+            file.write(line + '\n')
+    with open('new_gtdb.txt', 'r') as file:
+        lines = file.readlines()
+    result_lines = [line for line in lines if line.split()[0] != '0']
+    with open('related_genomes_values.txt', 'w') as file:
+        file.writelines(result_lines)
+
+
+def deal_gtdb_phy(phy_filename):
+    with open('related_genomes_values.txt', 'r') as file:
+        lines = file.readlines()
+    for i in range(len(lines)):
+        columns = lines[i].split(' ')
+        if len(columns) >= 2:
+            file_name1 = columns[1].split('/')[-1][:15]
+            columns[1] = 'GTDB_' + file_name1
+            lines[i] = ' '.join(columns) + '\n'
+    with open('modified_file.txt', 'w') as file:
+        file.writelines(lines)
+    new_accession_list = []
+    new_gtdb_taxonomy_list = []
+    with open('static/gtdbr214_accession_taxonomy.txt', 'r') as file:
+        for line in file:
+            accession, taxonomy = line.strip().split('\t')
+            new_accession_list.append(accession)
+            new_gtdb_taxonomy_list.append(taxonomy)
+    accession_taxonomy = {}
+    for i in range(len(new_accession_list)):
+        accession_taxonomy[new_accession_list[i]] = new_gtdb_taxonomy_list[i]
+    filename = 'modified_file.txt'
+    new_filename = 'new_accession_taxonomy.txt'
+    with open(filename, 'r') as file:
+        with open(new_filename, 'w') as new_file:
+            for line in file:
+                columns = line.split()
+                column_1 = columns[0]
+                column_2 = columns[1]
+                column_3 = accession_taxonomy.get(column_2)
+                new_line = f"{column_1}\t{column_2}\t{column_3}\n"
+                new_file.write(new_line)
+    filename = 'new_accession_taxonomy.txt'
+    known_species = []
+    all_accessions = []
+    dict1 = {}
+    dict2 = {}
+    with open(filename, 'r') as file:
+        for line in file:
+            columns = line.split()
+            column_1 = columns[0]
+            column_2 = columns[1]
+            column_3 = columns[2:]
+            tempfile = ''
+            for x in column_3:
+                tempfile = tempfile + x + ' '
+            tempfile = tempfile[:-1]
+            known_species.append(tempfile)
+            dict1[column_1] = column_2
+            dict2[column_2] = tempfile
+    data = []
+    with open(phy_filename, "r") as file:
+        lines = file.readlines()
+        for line in lines:
+            data.append(line.strip().split())
+    first_col = [row[0] for row in data[1:]]
+    for i, item in enumerate(first_col):
+        if item in dict1:
+            first_col[i] = dict1[item]
+        else:
+            first_col[i] = first_col[i][:15]
+    for i, item in enumerate(first_col):
+        data[i + 1][0] = item
+    for i in range(len(data)):
+        if i == 0:
+            pass
+        else:
+            all_accessions.append(data[i][0])
+    if os.path.exists(phy_filename):
+        os.remove(phy_filename)
+    with open(phy_filename, "w") as file:
+        for row in data:
+            file.write(" ".join(row) + "\n")
