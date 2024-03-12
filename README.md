@@ -118,6 +118,7 @@ kssdtree.visualize(newick='PROK31.newick', mode='r')
 kssdtree.quick(shuffle='L3K9.shuf', genomes='PROK1', output='PROK31.newick', reference='gtdbr214', method='nj', mode='r', N=30)
 
 ```
+
 More usages about Kssdtree, please see Kssdtree user manual.
  
 
