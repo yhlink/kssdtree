@@ -75,7 +75,7 @@ kssdtree.sketch(shuffle='L3K10.shuf', genomes='hg38.fa.gz', output='Ref_sketch',
 kssdtree.sketch(shuffle='L3K10.shuf', genomes='HG43', output='HG43_sketch', set_opt=True)
 
 # step2、subtracting reference sketches (Ref_sketch) from input sketches (HG43_sketch)
-kssdtree.subtract(union_sketch='Ref_sketch', genomes_sketch=='HG43_sketch', output=='HG43_sub_sketch')
+kssdtree.subtract(ref_sketch='Ref_sketch', genomes_sketch=='HG43_sketch', output=='HG43_sub_sketch')
 
 # step3、calculating distance matrix
 kssdtree.dist(ref_sketch='HG43_sub_sketch', qry_sketch='HG43_sub_sketch', output='HG43.phylip', flag=0)
@@ -86,7 +86,10 @@ kssdtree.build(phylip='HG43.phylip', output='HG43.newick', method='nj')
 # step5、visualizing tree 
 kssdtree.visualize(newick='HG43.newick', taxonomy='HG43.txt', mode='r')
 # Note: HG43.txt records names (accessions) and taxonomies of 43 human genomes.
-
+HG01123    American Ancestry
+HG01258    American Ancestry
+HG01358    American Ancestry
+...
 # one-step implementation (recommendation)
 kssdtree.quick(shuffle='L3K10.shuf', genomes='HG43', output='HG43.newick', reference='hg38.fa.gz', taxonomy='HG43.txt', method='nj', mode='r')
 

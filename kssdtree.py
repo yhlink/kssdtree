@@ -30,7 +30,7 @@ def sketch(shuffle=None, genomes=None, output=None, set_opt=None):
         current_directory = os.getcwd()
         shuf_file_path = os.path.join(current_directory, shuffle)
         if not os.path.exists(shuf_file_path):
-            if shuffle == 'L3K9.shuf' or shuffle == 'L3K10.shuf':
+            if shuffle == 'L3K9.shuf':
                 print('downloading...', shuffle)
                 import http.client
                 http.client.HTTPConnection._http_vsn = 10
@@ -97,7 +97,7 @@ def retrieve(ref_sketch=None, qry_sketch=None, output=None, N=None):
     :return: null
     """
     if ref_sketch is not None and qry_sketch is not None and output is not None:
-        if ref_sketch == 'gtdbr214_sketch' and os.path.exists(os.path.join(os.getcwd(), ref_sketch)):
+        if ref_sketch == 'gtdbr214_sketch':
             print('retrieving...')
             start = time.time()
             temp_related_sketch = 'related_sketch'
@@ -203,6 +203,18 @@ def visualize(newick=None, taxonomy=None, mode=None):
         print('args error!!!')
 
 
+def union(ref_sketch=None, output=None):
+    """
+    :param sketch:
+    :param output:
+    :return:
+    """
+    if ref_sketch is not None and output is not None:
+        kssd.sketch_union(sketch, output)
+    else:
+        print('args error!!!')
+
+
 def subtract(ref_sketch=None, genomes_sketch=None, output=None, flag=0):
     """
     subtracting the ref_sketch from genomes_sketch and creating the remainder sketch files.
@@ -213,36 +225,30 @@ def subtract(ref_sketch=None, genomes_sketch=None, output=None, flag=0):
     :return: null
     """
     if ref_sketch is not None and genomes_sketch is not None and output is not None:
-        print('subtracting...')
-        start = time.time()
-        ref_union_sketch = ''
-        if flag == 0:
-            timeStamp = int(time.mktime(time.localtime(time.time())))
-            ref_union_sketch = 'ref_union_sketch_' + str(timeStamp)
         if flag == 1:
-            if not toolutils.allowed_file(ref_sketch.split('_')[0]):
-                cur_path = os.getcwd()
-                ref_path = os.path.join(cur_path, ref_sketch.split('_')[0])
-                num = toolutils.get_file_num(ref_path)
-                if num == 1:
-                    ref_union_sketch = ref_sketch
-                else:
-                    timeStamp = int(time.mktime(time.localtime(time.time())))
-                    ref_union_sketch = 'ref_union_sketch_' + str(timeStamp)
-            else:
-                ref_union_sketch = ref_sketch
-        kssd.sketch_union(ref_sketch, ref_union_sketch)
-        kssd.sketch_operate(ref_union_sketch, output, genomes_sketch)
-        end = time.time()
-        current_directory = os.getcwd()
-        temp_dir = os.path.join(current_directory, ref_union_sketch)
-        if platform.system() == 'Linux':
-            if os.path.exists(temp_dir):
-                shutil.rmtree(temp_dir)
+            print('subtracting...')
+            start = time.time()
+            kssd.sketch_operate(ref_sketch, output, genomes_sketch)
+            end = time.time()
+            print('subtract spend time：%.2fs' % (end - start))
+            print('subtract finished!')
         else:
-            pass
-        print('subtract spend time：%.2fs' % (end - start))
-        print('subtract finished!')
+            timeStamp = int(time.mktime(time.localtime(time.time())))
+            temp_union_sketch = 'ref_union_sketch_' + str(timeStamp)
+            print('subtracting...')
+            start = time.time()
+            union(ref_sketch=ref_sketch, output=temp_union_sketch)
+            kssd.sketch_operate(temp_union_sketch, output, genomes_sketch)
+            end = time.time()
+            current_directory = os.getcwd()
+            temp_dir = os.path.join(current_directory, temp_union_sketch)
+            if platform.system() == 'Linux':
+                if os.path.exists(temp_dir):
+                    shutil.rmtree(temp_dir)
+            else:
+                pass
+            print('subtract spend time：%.2fs' % (end - start))
+            print('subtract finished!')
     else:
         print('args error!!!')
 
@@ -323,45 +329,62 @@ def quick(shuffle=None, genomes=None, output=None, reference=None, taxonomy=None
             print('args error or N<=0!!!')
     else:
         if shuffle is not None and genomes is not None and output is not None and method in ['nj', 'dnj']:
-            timeStamp = int(time.mktime(time.localtime(time.time())))
-            temp_reference_sketch = 'ref_sketch_' + str(timeStamp)
-            temp_genomes_sketch = genomes + '_sketch_' + str(timeStamp)
-            temp_subtract_sketch = genomes + '_subtract_sketch_' + str(timeStamp)
-            temp_phy = 'temp.phy'
-            print('step1...')
-            sketch(shuffle=shuffle, genomes=reference, output=temp_reference_sketch, set_opt=True)
-            sketch(shuffle=shuffle, genomes=genomes, output=temp_genomes_sketch, set_opt=True)
-            print('step2...')
-            subtract(ref_sketch=temp_reference_sketch, genomes_sketch=temp_genomes_sketch,
-                     output=temp_subtract_sketch, flag=1)
-            print('step3...')
-            if method == 'nj':
-                dist(ref_sketch=temp_subtract_sketch, qry_sketch=temp_subtract_sketch, output=temp_phy, flag=0)
+            if shuffle is not None and genomes is not None and output is not None and method in ['nj', 'dnj']:
+                timeStamp = int(time.mktime(time.localtime(time.time())))
+                temp_reference_sketch = 'ref_sketch_' + str(timeStamp)
+                temp_genomes_sketch = genomes + '_sketch_' + str(timeStamp)
+                if not toolutils.allowed_file(reference):
+                    cur_path = os.getcwd()
+                    ref_path = os.path.join(cur_path, reference)
+                    num = toolutils.get_file_num(ref_path)
+                    if num == 1:
+                        temp_union_sketch = temp_reference_sketch
+                    else:
+                        temp_union_sketch = 'ref_union_sketch_' + str(timeStamp)
+                else:
+                    temp_union_sketch = temp_reference_sketch
+                temp_subtract_sketch = genomes + '_subtract_sketch_' + str(timeStamp)
+                temp_phy = 'temp.phy'
+                print('step1...')
+                sketch(shuffle=shuffle, genomes=reference, output=temp_reference_sketch, set_opt=True)
+                sketch(shuffle=shuffle, genomes=genomes, output=temp_genomes_sketch, set_opt=True)
+                print('step2...')
+                union(ref_sketch=temp_reference_sketch, output=temp_union_sketch)
+                subtract(ref_sketch=temp_union_sketch, genomes_sketch=temp_genomes_sketch,
+                         output=temp_subtract_sketch, flag=1)
+                print('step3...')
+                if method == 'nj':
+                    dist(ref_sketch=temp_subtract_sketch, qry_sketch=temp_subtract_sketch, output=temp_phy,
+                         flag=0)
+                else:
+                    dist(ref_sketch=temp_subtract_sketch, qry_sketch=temp_subtract_sketch, output=temp_phy,
+                         flag=1)
+                print('step4...')
+                build(phylip=temp_phy, output=output, method=method)
+                if platform.system() == 'Linux':
+                    pass
+                else:
+                    print('step5...')
+                    print('tree visualization finished!')
+                    visualize(newick=output, taxonomy=taxonomy, mode=mode)
+                current_directory = os.getcwd()
+                temp_dir1 = os.path.join(current_directory, temp_reference_sketch)
+                temp_dir2 = os.path.join(current_directory, temp_genomes_sketch)
+                temp_dir3 = os.path.join(current_directory, temp_union_sketch)
+                temp_dir4 = os.path.join(current_directory, temp_subtract_sketch)
+                temp_dir5 = os.path.join(current_directory, 'distout')
+                if platform.system() == 'Linux':
+                    if os.path.exists(temp_dir1):
+                        shutil.rmtree(temp_dir1)
+                    if os.path.exists(temp_dir2):
+                        shutil.rmtree(temp_dir2)
+                    if os.path.exists(temp_dir3):
+                        shutil.rmtree(temp_dir3)
+                    if os.path.exists(temp_dir4):
+                        shutil.rmtree(temp_dir4)
+                    if os.path.exists(temp_dir5):
+                        shutil.rmtree(temp_dir5)
+                else:
+                    pass
             else:
-                dist(ref_sketch=temp_subtract_sketch, qry_sketch=temp_subtract_sketch, output=temp_phy, flag=1)
-            print('step4...')
-            build(phylip=temp_phy, output=output, method=method)
-            if platform.system() == 'Linux':
-                pass
-            else:
-                print('step5...')
-                print('tree visualization finished!')
-                visualize(newick=output, taxonomy=taxonomy, mode=mode)
-            current_directory = os.getcwd()
-            temp_dir1 = os.path.join(current_directory, temp_reference_sketch)
-            temp_dir2 = os.path.join(current_directory, temp_genomes_sketch)
-            temp_dir3 = os.path.join(current_directory, temp_subtract_sketch)
-            temp_dir4 = os.path.join(current_directory, 'distout')
-            if platform.system() == 'Linux':
-                if os.path.exists(temp_dir1):
-                    shutil.rmtree(temp_dir1)
-                if os.path.exists(temp_dir2):
-                    shutil.rmtree(temp_dir2)
-                if os.path.exists(temp_dir3):
-                    shutil.rmtree(temp_dir3)
-                if os.path.exists(temp_dir4):
-                    shutil.rmtree(temp_dir4)
-            else:
-                pass
-        else:
-            print('args error!!!')
+                print('args error!!!')
