@@ -62,6 +62,7 @@ kssdtree.visualize(newick='ES29.newick', mode='r')
 kssdtree.quick(shuffle='L3K10.shuf', genomes='ES29', output='ES29.newick',  method='nj', mode='r')
 
 ```
+![image](https://github.com/yhlink/kssdtree/blob/master/cases/case1.png)
 
 
 ## 3.2 Reference subtraction pipeline
@@ -94,6 +95,7 @@ HG01358    American Ancestry
 kssdtree.quick(shuffle='L3K10.shuf', genomes='HG43', output='HG43.newick', reference='hg38.fa.gz', taxonomy='HG43.txt', method='nj', mode='r')
 
 ```
+![image](https://github.com/yhlink/kssdtree/blob/master/cases/case2.png)
 
 ## 3.3 Phylogenetic placement pipeline
 Demonstrate the phylogenetic placement pipeline of Kssdtree using an assembled prokaryotic genome, including a multi-step implementation and a one-step implementation.
@@ -121,8 +123,9 @@ kssdtree.visualize(newick='PROK31.newick', mode='r')
 kssdtree.quick(shuffle='L3K9.shuf', genomes='PROK1', output='PROK31.newick', reference='gtdbr214', method='nj', mode='r', N=30)
 
 ```
+![image](https://github.com/yhlink/kssdtree/blob/master/cases/case3.png)
 
-More usages about Kssdtree, please see Kssdtree user manual.
+More usages about Kssdtree, please see Kssdtree user manual (http://18.205.53.149:8000/kssdtree/kssdtree_user_manual.pdf).
  
 
 
