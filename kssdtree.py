@@ -94,7 +94,7 @@ def retrieve(ref_sketch=None, qry_sketch=None, output=None, N=None):
     :param qry_sketch: The folder path for sketch result files of query genome files.
     :param output: The output folder path for retrieve sketch result files of genome files.
     :param N: Max number of nearest reference genomes.
-    :return: null
+    :return: 0/1
     """
     if ref_sketch is not None and qry_sketch is not None and output is not None:
         if ref_sketch == 'gtdbr214_sketch':
