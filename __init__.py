@@ -1,1 +1,1 @@
-from .kssdtree import sketch, dist, build, visualize, quick, subtract, retrieve
+from .kssdtree import shuffle, sketch, dist, build, visualize, quick, subtract, retrieve
