@@ -47,13 +47,20 @@ def get_file_num(cwd):
     return len(res)
 
 
-def upload_request(dir_name, method, N):
-    zip_file = dir_name + '.zip'
+def decompress_zip(zip_path, dir_path):
+    f = zipfile.ZipFile(zip_path, 'r')
+    for file in f.namelist():
+        f.extract(file, dir_path)
+    f.close()
+
+
+def upload_request(qry_sketch, method, N):
+    zip_file = qry_sketch + '.zip'
     zip = zipfile.ZipFile(zip_file, 'w', zipfile.ZIP_DEFLATED)
-    for item in os.listdir(dir_name):
-        zip.write(dir_name + os.sep + item)
+    for item in os.listdir(qry_sketch):
+        zip.write(qry_sketch + os.sep + item)
     zip.close()
-    url = "http://18.205.53.149:8000/kssdtree/upload"
+    url = "http://www.metakssdcoabundance.link/kssdtree/upload"
     header = {
         "kssdtree": 'upload'
     }

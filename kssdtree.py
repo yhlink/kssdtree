@@ -9,235 +9,300 @@ import time
 import requests
 
 
-def shuffle(k=8, s=5, l=2, o='default'):
-    print('shuffling...')
+def shuffle(k=None, s=None, l=None, o=None):
+    '''
+    generates .shuf file.
+    :param k: Half-length of k-mer, k=x meaning use k-mer of length 2x.
+    :param s: Half-length of k-mer substring, s=x meaning the whole space is the collection of all 2x-mer.
+    :param l: The level of dimensionality-reduction. l=x meaning the expected rate of dimensionality-reduction is 16^x.
+    :param o: The output name of .shuf file.
+    :return:
+    '''
     kssd.write_dim_shuffle_file(k, s, l, o)
-    print('shuffle finished!')
 
 
-def sketch(shuffle=None, genomes=None, output=None, set_opt=None):
-    """
-    sketch: sketching genomes into sketch and generating sketch files.
-    :param shuffle: Kssdtree provide 'L3K9.shuf' and 'L3K10.shuf' files as input for genome sketching or decomposition. The default is 'L3K10.shuf'.
-    :param genomes: The folder path for genome files. It supports the input of genome files in fasta/fastq formats.
-    :param output: The output folder path for sketch result files of genome files.
-    :param set_opt: Whether to do the set operation, default is False, if you want to do the set operation, you can set set_opt=True.
-    :return: null
-    """
-    if set_opt is None:
-        set_opt = False
-    if shuffle is not None and genomes is not None and output is not None:
-        current_directory = os.getcwd()
-        shuf_file_path = os.path.join(current_directory, shuffle)
-        if not os.path.exists(shuf_file_path):
-            if shuffle == 'L3K9.shuf':
-                print('downloading...', shuffle)
+def sketch(shuf_file=None, genomes_file=None, output=None, set_opt=None):
+    '''
+
+    :param shuf_file:
+    :param genomes_file:
+    :param output:
+    :param set_opt:
+    :return:
+    '''
+    if shuf_file is not None and genomes_file is not None and output is not None:
+        if not os.path.exists(genomes_file):
+            print('No such file or directory: ', genomes_file)
+            return False
+        if set_opt is None:
+            set_opt = False
+        for filename in os.listdir(genomes_file):
+            if not toolutils.allowed_file(filename):
+                print('Genome format error for file:', filename)
+                return False
+        if not os.path.exists(shuf_file):
+            if shuf_file in ['L3K9.shuf']:
+                print('Downloading...', shuf_file)
                 import http.client
                 http.client.HTTPConnection._http_vsn = 10
                 http.client.HTTPConnection._http_vsn_str = 'HTTP/1.0'
-                url = 'http://18.205.53.149:8000/kssdtree/shuffle/' + shuffle
-                headers = {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36'
-                }
-                r = requests.get(url, headers=headers, stream=True)
-                with open(os.getcwd() + "\\" + shuffle, mode="wb") as f:
-                    f.write(r.content)
-                print('download finished!', shuffle)
-            else:
-                file_name = shuffle.split('.')[0]
+                url = 'http://www.metakssdcoabundance.link/kssdtree/shuffle/' + shuf_file
+                start_time = time.time()
+                response = requests.get(url, stream=True)
+                with open(shuf_file, 'wb') as file:
+                    for chunk in response.iter_content(chunk_size=1024):
+                        if chunk:
+                            file.write(chunk)
+                end_time = time.time()
+                if end_time - start_time > 120:
+                    print(
+                        "Network timeout, please manually download from github (https://github.com/yhlink/kssdtree/tree/master/shuffle_file)")
+                    return False
+                print('Download finished: ', shuf_file)
+            elif shuf_file in ['L2K8.shuf', 'L3K10.shuf', 'L2K9.shuf', 'L3K11.shuf']:
+                print('Shuffling...', shuf_file)
+                file_name = shuf_file.split('.')[0]
                 k = int(file_name[3:])
-                if k == 10:
+                if k == 11 or k == 10:
                     s = 6
                 else:
                     s = 5
                 l = int(file_name[1])
-                shuffle(k=k, s=s, l=l, o=file_name)
-        print('sketching...')
+                shuffle(k, s, l, file_name)
+                print('Shuffle finished: ', shuf_file)
+            else:
+                print('No such file or directory: ', shuf_file)
+                return False
+        print('Sketching...')
         start = time.time()
         if set_opt:
-            kssd.dist_dispatch(shuffle, genomes, output, 1, 0, 0)
+            kssd.dist_dispatch(shuf_file, genomes_file, output, 1, 0, 0)
         else:
-            kssd.dist_dispatch(shuffle, genomes, output, 0, 0, 0)
+            kssd.dist_dispatch(shuf_file, genomes_file, output, 0, 0, 0)
         end = time.time()
-        print('sketch spend time：%.2fs' % (end - start))
-        print('sketch finished!')
+        print('Sketch spend time：%.2fs' % (end - start))
+        print('Sketch finished!')
+        return True
     else:
-        print('args error!!!')
+        print('Args error!!!')
+        return False
 
 
 def dist(ref_sketch=None, qry_sketch=None, output=None, flag=None):
     """
-    computing pairwise distances between reference and query genomes, and then generating a distance matrix in phylip format.
-    :param ref_sketch: The folder path for sketch result files of reference genome files.
-    :param qry_sketch: The folder path for sketch result files of query genome files.
-    :param output: The output filename of distance matrix in phylip format.
-    :param flag: 0 or 1. 0,1 is used to generate the distance matrix required by NJ (0 for diagonal elements) and DNJ (no diagonal elements) respectively.
-    :return: null
+
+    :param ref_sketch:
+    :param qry_sketch:
+    :param output:
+    :param flag:
+    :return:
     """
-    if flag is None:
-        flag = 0
     if ref_sketch is not None and qry_sketch is not None and output is not None:
-        print('disting...')
+        if not os.path.exists(ref_sketch):
+            print('No such file or directory: ', ref_sketch)
+            return False
+        if not os.path.exists(qry_sketch):
+            print('No such file or directory: ', qry_sketch)
+            return False
+        if flag is None:
+            flag = 0
+        print('Disting...')
         start = time.time()
-        kssd.dist_dispatch(ref_sketch, output, qry_sketch, 2, 0, flag)
-        end = time.time()
-        print('dist spend time：%.2fs' % (end - start))
-        print('dist finished!')
+        if '/' in output:
+            output_dir = os.path.dirname(output)
+            output_name = output.split('/')[-1]
+            if not os.path.exists(output_dir):
+                os.makedirs(output_dir)
+                print("Created directory:", output_dir)
+        else:
+            output_name = output
+        if output_name.endswith(".phy") or output_name.endswith(".phylip"):
+            kssd.dist_dispatch(ref_sketch, output, qry_sketch, 2, 0, flag)
+            end = time.time()
+            print('Dist spend time：%.2fs' % (end - start))
+            print('Dist finished!')
+            return True
+        else:
+            print('Output type error, only supports .phylip (.phy) format:', output_name)
+            return False
     else:
-        print('args error!!!')
+        print('Args error!!!')
+        return False
 
 
-def retrieve(ref_sketch=None, qry_sketch=None, output=None, N=None):
+def retrieve(ref_sketch=None, qry_sketch=None, output=None, N=None, method=None):
     """
-    retrieving N closest sketches from reference or GTDB (R214) sketches and combining query sketch files.
-    :param ref_sketch: The folder path for sketch result files of reference genome files.
-    :param qry_sketch: The folder path for sketch result files of query genome files.
-    :param output: The output folder path for retrieve sketch result files of genome files.
-    :param N: Max number of nearest reference genomes.
-    :return: 0/1
+
+    :param ref_sketch:
+    :param qry_sketch:
+    :param output:
+    :param N:
+    :param method:
+    :return:
     """
     if ref_sketch is not None and qry_sketch is not None and output is not None:
+        if method is None:
+            method = 'nj'
+        if method not in ['nj', 'dnj']:
+            print('Only support nj and dnj methods!!!')
+            return
+        if not os.path.exists(qry_sketch):
+            print('No such file or directory: ', qry_sketch)
+            return False
         if ref_sketch == 'gtdbr214_sketch':
-            print('retrieving...')
+            print('Retrieving...')
             start = time.time()
-            temp_related_sketch = 'related_sketch'
-            reference = 'static/gtdbr214_sketch'
-            kssd.dist_dispatch(reference, output, qry_sketch, 2, N, 3)
-            kssd.print_gnames(reference, 'gtdb.txt')
-            file_path1 = os.path.join(os.getcwd(), 'distout', 'distance.out')
-            toolutils.deal_gtdb_txt(file_path1)
-            kssd.grouping_genomes('new_gtdb.txt', reference, temp_related_sketch)
-            kssd.dist_dispatch(output, qry_sketch, temp_related_sketch, 3, 0, 0)
+            if not os.path.exists(output):
+                os.makedirs(output)
+                print("Created directory:", output)
+            newick, accession_taxonomy = toolutils.upload_request(qry_sketch=qry_sketch, method=method, N=N)
+            with open(os.path.join(output, 'output.newick'), 'w') as f:
+                f.write(newick)
+            with open(os.path.join(output, 'output_accession_taxonomy.txt'), 'w') as f:
+                for key, value in accession_taxonomy.items():
+                    f.write("%s %s\n" % (key, value))
             end = time.time()
-            print('retrieve spend time：%.2fs' % (end - start))
-            print('retrieve finished!')
+            print('Retrieve spend time：%.2fs' % (end - start))
+            print('Retrieve finished!')
+            return True
         else:
-            print('retrieving...')
-            start = time.time()
-            timeStamp = int(time.mktime(time.localtime(time.time())))
-            temp_related_sketch = 'related_sketch_' + str(timeStamp)
-            kssd.dist_dispatch(ref_sketch, output, qry_sketch, 2, N, 3)
-            kssd.print_gnames(ref_sketch, 'gtdb.txt')
-            file_path1 = os.path.join(os.getcwd(), 'distout', 'distance.out')
-            toolutils.deal_gtdb_txt(file_path1)
-            kssd.grouping_genomes('new_gtdb.txt', ref_sketch, temp_related_sketch)
-            kssd.dist_dispatch(output, qry_sketch, temp_related_sketch, 3, 0, 0)
-            end = time.time()
-            file_path1 = 'new.txt'
-            file_path2 = 'gtdb.txt'
-            file_path3 = 'new_gtdb.txt'
-            file_path4 = 'related_genomes_values.txt'
-            file_path5 = 'modified_file.txt'
-            file_path6 = 'new_accession_taxonomy.txt'
-            if os.path.exists(file_path1):
-                os.remove(file_path1)
-            if os.path.exists(file_path2):
-                os.remove(file_path2)
-            if os.path.exists(file_path3):
-                os.remove(file_path3)
-            if os.path.exists(file_path4):
-                os.remove(file_path4)
-            if os.path.exists(file_path5):
-                os.remove(file_path5)
-            if os.path.exists(file_path6):
-                os.remove(file_path6)
-            print('retrieve spend time：%.2fs' % (end - start))
-            print('retrieve finished!')
+            print("ref_sketch must be set to 'gtdbr214_sketc'")
+            return False
     else:
-        print('args error!!!')
+        print('Args error!!!')
+        return False
 
 
 def build(phylip=None, output=None, method=None):
     """
-    constructing tree with NJ or DNJ and generating tree in newick format.
-    :param phylip: The distance matrix in phylip format.
-    :param output: 'nj'(NJ) or 'dnj'(DNJ) method for constructing tree. The default is 'nj'.
-    :param method: The output filename of tree in newick format.
-    :return: null
+
+    :param phylip:
+    :param output:
+    :param method:
+    :return:
     """
-    if method is None:
-        method = 'nj'
-    if method not in ['nj', 'dnj']:
-        print('method only support nj and dnj!!!')
-        return
     if phylip is not None:
-        print('building...')
-        start = time.time()
-        if output is None:
-            output = 'kssdtree.newick'
-        if method == 'nj':
-            state = nj.build(phylip, output)
+        if not os.path.exists(phylip):
+            print('No such file or directory: ', phylip)
+            return False
+        if method is None:
+            method = 'nj'
+        if method not in ['nj', 'dnj']:
+            print('Only support nj and dnj methods!!!')
+            return False
+        print('Building...')
+        if '/' in output:
+            output_dir = os.path.dirname(output)
+            output_name = output.split('/')[-1]
+            if not os.path.exists(output_dir):
+                os.makedirs(output_dir)
+                print("Created directory:", output_dir)
         else:
-            if platform.system() == 'Linux':
-                state = dnj.build(phylip, output, method)
-            else:
+            output_name = output
+        if output_name.endswith(".nwk") or output_name.endswith(".newick"):
+            start = time.time()
+            if method == 'nj':
                 state = nj.build(phylip, output)
-        if state == 1:
-            nwk_path = os.path.join(os.getcwd(), output)
-            with open(nwk_path, 'r') as f:
-                lines = f.readlines()
-                newick = ''.join(lines)
-                newick = newick.replace('\n', '')
-            with open(nwk_path, 'w') as f:
-                f.write(newick)
-            end = time.time()
-            print('build spend time：%.2fs' % (end - start))
-            print('build finished!')
+            else:
+                if platform.system() == 'Linux':
+                    state = dnj.build(phylip, output, method)
+                else:
+                    state = nj.build(phylip, output)
+            if state == 1:
+                with open(output, 'r') as f:
+                    lines = f.readlines()
+                    newick = ''.join(lines)
+                    newick = newick.replace('\n', '')
+                with open(output, 'w') as f:
+                    f.write(newick)
+                end = time.time()
+                print('Build spend time：%.2fs' % (end - start))
+                print('Build finished!')
+                return True
     else:
-        print('args error!!!')
+        print('Args error!!!')
+        return False
 
 
 def visualize(newick=None, taxonomy=None, mode=None):
     """
-    visualizing tree with ETE3 toolkit.
-    :param newick: The tree in newick format.
-    :param taxonomy:  The taxonomy information in txt format, which records the name (accession) of genome and its taxonomy. The default is None.
-    :param mode: 'r'(rectangle) or 'c'(circle) mode for visualizing tree. The default is 'r'.
-    :return: null
+
+    :param newick:
+    :param taxonomy:
+    :param mode:
+    :return:
     """
-    if mode is None:
-        mode = 'r'
     if newick is not None:
+        if not os.path.exists(newick):
+            print('No such file or directory: ', newick)
+            return False
+        if mode is None:
+            mode = 'r'
         toolutils.view_tree(newick, taxonomy, mode=mode)
     else:
-        print('args error!!!')
+        print('Args error!!!')
+        return False
 
 
 def union(ref_sketch=None, output=None):
     """
-    :param sketch:
+
+    :param ref_sketch:
     :param output:
     :return:
     """
     if ref_sketch is not None and output is not None:
-        kssd.sketch_union(sketch, output)
+        if not os.path.exists(ref_sketch):
+            print('No such file or directory: ', ref_sketch)
+            return False
+        kssd.sketch_union(ref_sketch, output)
+        return True
     else:
-        print('args error!!!')
+        return False
 
 
-def subtract(ref_sketch=None, genomes_sketch=None, output=None, flag=0):
+def subtract(ref_sketch=None, genomes_sketch=None, output=None, flag=None):
     """
-    subtracting the ref_sketch from genomes_sketch and creating the remainder sketch files.
-    :param ref_sketch: The folder path for reference sketch result files.
-    :param genomes_sketch: The folder path for sketch result files of genome files.
-    :param output: The output folder path for remainder sketch result files.
-    :param flag: 0.
-    :return: null
+
+    :param ref_sketch:
+    :param genomes_sketch:
+    :param output:
+    :param flag:
+    :return:
     """
     if ref_sketch is not None and genomes_sketch is not None and output is not None:
+        if not os.path.exists(ref_sketch):
+            print('No such file or directory: ', ref_sketch)
+            return False
+        if not os.path.exists(genomes_sketch):
+            print('No such file or directory: ', genomes_sketch)
+            return False
         if flag == 1:
-            print('subtracting...')
+            print('Subtracting...')
             start = time.time()
             kssd.sketch_operate(ref_sketch, output, genomes_sketch)
             end = time.time()
-            print('subtract spend time：%.2fs' % (end - start))
-            print('subtract finished!')
+            print('Subtract spend time：%.2fs' % (end - start))
+            print('Subtract finished!')
+            return True
         else:
             timeStamp = int(time.mktime(time.localtime(time.time())))
-            temp_union_sketch = 'ref_union_sketch_' + str(timeStamp)
-            print('subtracting...')
+            print('Subtracting...')
             start = time.time()
-            union(ref_sketch=ref_sketch, output=temp_union_sketch)
+            temp_txt = 'ref.txt'
+            kssd.print_gnames(ref_sketch, temp_txt)
+            nums = 0
+            with open(temp_txt, 'r') as file:
+                for line in file:
+                    nums += 1
+            if nums == 1:
+                temp_union_sketch = ref_sketch
+            else:
+                temp_union_sketch = 'ref_union_sketch_' + str(timeStamp)
+            r = union(ref_sketch=ref_sketch, output=temp_union_sketch)
+            if not r:
+                print('Union error!!!')
+                return False
             kssd.sketch_operate(temp_union_sketch, output, genomes_sketch)
             end = time.time()
             current_directory = os.getcwd()
@@ -245,94 +310,101 @@ def subtract(ref_sketch=None, genomes_sketch=None, output=None, flag=0):
             if platform.system() == 'Linux':
                 if os.path.exists(temp_dir):
                     shutil.rmtree(temp_dir)
+                if os.path.exists(temp_txt):
+                    os.remove(temp_txt)
             else:
                 pass
-            print('subtract spend time：%.2fs' % (end - start))
-            print('subtract finished!')
+            print('Subtract spend time：%.2fs' % (end - start))
+            print('Subtract finished!')
+            return True
     else:
-        print('args error!!!')
+        print('Args error!!!')
+        return False
 
 
-def quick(shuffle=None, genomes=None, output=None, reference=None, taxonomy=None, method='nj', mode='r', N=0):
+def quick(shuf_file=None, genomes_file=None, output=None, reference=None, taxonomy=None, method='nj', mode='r', N=0):
     """
-    simplifying pipeline and eliminating the necessity of organizing many intermediate files.
-    :param shuffle: Kssdtree provide frequently-used 'L3K9.shuf' and 'L3K10.shuf' files as input for genome sketching or decomposition. The default is 'L3K10.shuf'. If you want to perform phylogenetic placement, you must use 'L3K9.shuf' file.
-    :param genomes: The folder path for genome files. It supports the input of genome files in fasta/fastq formats.
-    :param output: The output filename of tree in newick format.
-    :param reference: The default is None, will perform the routine workflow. If you want to perform the reference subtraction workflow, you can set reference to the reference genome file or folder path. If you want to perform the phylogenetic placement, you must set reference to ‘gtdbr214’.
-    :param taxonomy: The filename of taxonomy information in txt format, which records the name (accession) of genome and its taxonomy. The default is None.
-    :param method: 'nj'(NJ) or 'dnj'(DNJ) method for constructing tree. The default is 'nj'.
-    :param mode: 'r'(rectangle) or 'c'(circle) mode for visualizing tree. The default is 'r'.
-    :param N: Max number of nearest reference genomes. The default is 0 for computing pairwise distances between genomes on routine and reference subtraction workflows. If you want to perform the phylogenetic placement, you can set N > 0.
-    :return: null
+
+    :param shuf_file:
+    :param genomes_file:
+    :param output:
+    :param reference:
+    :param taxonomy:
+    :param method:
+    :param mode:
+    :param N:
+    :return:
     """
     if reference is None and taxonomy is None:
-        if shuffle is not None and genomes is not None and output is not None:
-            for filename in os.listdir(genomes):
-                if not toolutils.allowed_file(filename):
-                    print('Genome format error for file:', filename)
-                    return 0
+        if shuf_file is not None and genomes_file is not None and output is not None:
             timeStamp = int(time.mktime(time.localtime(time.time())))
-            temp_sketch = genomes + '_sketch_' + str(timeStamp)
+            temp_sketch = genomes_file + '_sketch_' + str(timeStamp)
             temp_phy = 'temp.phy'
-            print('step1...')
-            sketch(shuffle=shuffle, genomes=genomes, output=temp_sketch, set_opt=False)
-            print('step2...')
+            print('Step1...')
+            s1 = sketch(shuf_file=shuf_file, genomes_file=genomes_file, output=temp_sketch, set_opt=False)
+            if not s1:
+                return False
+            print('Step2...')
             if method == 'nj':
-                dist(ref_sketch=temp_sketch, qry_sketch=temp_sketch, output=temp_phy, flag=0)
+                s2 = dist(ref_sketch=temp_sketch, qry_sketch=temp_sketch, output=temp_phy, flag=0)
             else:
-                dist(ref_sketch=temp_sketch, qry_sketch=temp_sketch, output=temp_phy, flag=1)
-            print('step3...')
-            build(phylip=temp_phy, output=output, method=method)
+                s2 = dist(ref_sketch=temp_sketch, qry_sketch=temp_sketch, output=temp_phy, flag=1)
+            if not s2:
+                return False
+            print('Step3...')
+            s3 = build(phylip=temp_phy, output=output, method=method)
+            if not s3:
+                return False
             if platform.system() == 'Linux':
-                pass
-            else:
-                print('step4...')
-                print('tree visualization finished!')
-                visualize(newick=output, taxonomy=taxonomy, mode=mode)
-            current_directory = os.getcwd()
-            temp_dir1 = os.path.join(current_directory, temp_sketch)
-            temp_dir2 = os.path.join(current_directory, 'distout')
-            if platform.system() == 'Linux':
+                current_directory = os.getcwd()
+                temp_dir1 = os.path.join(current_directory, temp_sketch)
+                temp_dir2 = os.path.join(current_directory, 'distout')
                 if os.path.exists(temp_dir1):
                     shutil.rmtree(temp_dir1)
                 if os.path.exists(temp_dir2):
                     shutil.rmtree(temp_dir2)
+                if os.path.exists(temp_phy):
+                    os.remove(temp_phy)
+                return True
             else:
-                pass
+                print('Step4...')
+                print('Tree visualization finished!')
+                visualize(newick=output, taxonomy=taxonomy, mode=mode)
         else:
-            print('args error!!!')
-    elif reference == 'gtdbr214' and taxonomy is None:
-        if shuffle is not None and genomes is not None and output is not None and toolutils.is_positive_integer(N):
-            if shuffle != 'L3K9.shuf':
-                print("shuffle must be set to 'L3K9.shuf'")
-                return 0
-            for filename in os.listdir(genomes):
-                if not toolutils.allowed_file(filename):
-                    print('Genome format error for file:', filename)
-                    return 0
+            print('Args error!!!')
+            return False
+
+    elif reference == 'gtdbr214_sketch' and taxonomy is None:
+        if shuf_file is not None and genomes_file is not None and output is not None:
+            if not toolutils.is_positive_integer(N):
+                print("N must >0 !!!")
+                return False
+            if shuf_file != 'L3K9.shuf':
+                print("shuffle file must be set to 'L3K9.shuf'")
+                return False
             timeStamp = int(time.mktime(time.localtime(time.time())))
-            temp_sketch = genomes + '_sketch_' + str(timeStamp)
-            sketch(shuffle=shuffle, genomes=genomes, output=temp_sketch, set_opt=True)
-            newick, accession_taxonomy = toolutils.upload_request(dir_name=temp_sketch, method=method, N=N)
-            with open(output, 'w') as f:
-                f.write(newick)
-            with open('accession_taxonomy.txt', 'w') as f:
-                for key, value in accession_taxonomy.items():
-                    f.write("%s %s\n" % (key, value))
+            qry_sketch = genomes_file + '_sketch_' + str(timeStamp)
+            s1 = sketch(shuf_file=shuf_file, genomes_file=genomes_file, output=qry_sketch, set_opt=True)
+            if not s1:
+                return False
+            s2 = retrieve(ref_sketch=reference, qry_sketch=qry_sketch, output=output, N=N, method=method)
+            if not s2:
+                return False
             if platform.system() == 'Linux':
-                pass
+                return True
             else:
-                print('tree visualization finished!')
-                visualize(newick=output, taxonomy='accession_taxonomy.txt', mode=None)
+                print('Tree visualization finished!')
+                visualize(newick=os.path.join(output, 'output.newick'),
+                          taxonomy=os.path.join(output, 'output_accession_taxonomy.txt'), mode=None)
         else:
-            print('args error or N<=0!!!')
+            print('Args error!!!')
+            return False
     else:
-        if shuffle is not None and genomes is not None and output is not None and method in ['nj', 'dnj']:
-            if shuffle is not None and genomes is not None and output is not None and method in ['nj', 'dnj']:
+        if shuf_file is not None and genomes_file is not None and output is not None and method in ['nj', 'dnj']:
+            if shuf_file is not None and genomes_file is not None and output is not None and method in ['nj', 'dnj']:
                 timeStamp = int(time.mktime(time.localtime(time.time())))
                 temp_reference_sketch = 'ref_sketch_' + str(timeStamp)
-                temp_genomes_sketch = genomes + '_sketch_' + str(timeStamp)
+                temp_genomes_sketch = genomes_file + '_sketch_' + str(timeStamp)
                 if not toolutils.allowed_file(reference):
                     cur_path = os.getcwd()
                     ref_path = os.path.join(cur_path, reference)
@@ -343,37 +415,43 @@ def quick(shuffle=None, genomes=None, output=None, reference=None, taxonomy=None
                         temp_union_sketch = 'ref_union_sketch_' + str(timeStamp)
                 else:
                     temp_union_sketch = temp_reference_sketch
-                temp_subtract_sketch = genomes + '_subtract_sketch_' + str(timeStamp)
+                temp_subtract_sketch = genomes_file + '_subtract_sketch_' + str(timeStamp)
                 temp_phy = 'temp.phy'
-                print('step1...')
-                sketch(shuffle=shuffle, genomes=reference, output=temp_reference_sketch, set_opt=True)
-                sketch(shuffle=shuffle, genomes=genomes, output=temp_genomes_sketch, set_opt=True)
-                print('step2...')
-                union(ref_sketch=temp_reference_sketch, output=temp_union_sketch)
-                subtract(ref_sketch=temp_union_sketch, genomes_sketch=temp_genomes_sketch,
-                         output=temp_subtract_sketch, flag=1)
-                print('step3...')
+                print('Step1...')
+                s1 = sketch(shuf_file=shuf_file, genomes_file=reference, output=temp_reference_sketch, set_opt=True)
+                if not s1:
+                    return False
+                s2 = sketch(shuf_file=shuf_file, genomes_file=genomes_file, output=temp_genomes_sketch, set_opt=True)
+                if not s2:
+                    return False
+                print('Step2...')
+                s3 = union(ref_sketch=temp_reference_sketch, output=temp_union_sketch)
+                if not s3:
+                    return False
+                s4 = subtract(ref_sketch=temp_union_sketch, genomes_sketch=temp_genomes_sketch,
+                              output=temp_subtract_sketch, flag=1)
+                if not s4:
+                    return False
+                print('Step3...')
                 if method == 'nj':
-                    dist(ref_sketch=temp_subtract_sketch, qry_sketch=temp_subtract_sketch, output=temp_phy,
-                         flag=0)
+                    s5 = dist(ref_sketch=temp_subtract_sketch, qry_sketch=temp_subtract_sketch, output=temp_phy,
+                              flag=0)
                 else:
-                    dist(ref_sketch=temp_subtract_sketch, qry_sketch=temp_subtract_sketch, output=temp_phy,
-                         flag=1)
-                print('step4...')
-                build(phylip=temp_phy, output=output, method=method)
+                    s5 = dist(ref_sketch=temp_subtract_sketch, qry_sketch=temp_subtract_sketch, output=temp_phy,
+                              flag=1)
+                if not s5:
+                    return False
+                print('Step4...')
+                s6 = build(phylip=temp_phy, output=output, method=method)
+                if not s6:
+                    return False
                 if platform.system() == 'Linux':
-                    pass
-                else:
-                    print('step5...')
-                    print('tree visualization finished!')
-                    visualize(newick=output, taxonomy=taxonomy, mode=mode)
-                current_directory = os.getcwd()
-                temp_dir1 = os.path.join(current_directory, temp_reference_sketch)
-                temp_dir2 = os.path.join(current_directory, temp_genomes_sketch)
-                temp_dir3 = os.path.join(current_directory, temp_union_sketch)
-                temp_dir4 = os.path.join(current_directory, temp_subtract_sketch)
-                temp_dir5 = os.path.join(current_directory, 'distout')
-                if platform.system() == 'Linux':
+                    current_directory = os.getcwd()
+                    temp_dir1 = os.path.join(current_directory, temp_reference_sketch)
+                    temp_dir2 = os.path.join(current_directory, temp_genomes_sketch)
+                    temp_dir3 = os.path.join(current_directory, temp_union_sketch)
+                    temp_dir4 = os.path.join(current_directory, temp_subtract_sketch)
+                    temp_dir5 = os.path.join(current_directory, 'distout')
                     if os.path.exists(temp_dir1):
                         shutil.rmtree(temp_dir1)
                     if os.path.exists(temp_dir2):
@@ -384,7 +462,13 @@ def quick(shuffle=None, genomes=None, output=None, reference=None, taxonomy=None
                         shutil.rmtree(temp_dir4)
                     if os.path.exists(temp_dir5):
                         shutil.rmtree(temp_dir5)
+                    if os.path.exists(temp_phy):
+                        os.remove(temp_phy)
+                    return True
                 else:
-                    pass
+                    print('Step5...')
+                    print('Tree visualization finished!')
+                    visualize(newick=output, taxonomy=taxonomy, mode=mode)
             else:
-                print('args error!!!')
+                print('Args error!!!')
+                return False
