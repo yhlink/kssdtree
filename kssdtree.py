@@ -9,38 +9,22 @@ import time
 import requests
 
 
-
 def shuffle(k=None, s=None, l=None, o=None):
-    '''
-    generates .shuf file.
-    :param k: Half-length of k-mer, k=x meaning use k-mer of length 2x.
-    :param s: Half-length of k-mer substring, s=x meaning the whole space is the collection of all 2x-mer.
-    :param l: The level of dimensionality-reduction. l=x meaning the expected rate of dimensionality-reduction is 16^x.
-    :param o: The output name of .shuf file.
-    :return:
-    '''
     kssd.write_dim_shuffle_file(k, s, l, o)
 
 
 def sketch(shuf_file=None, genomes_file=None, output=None, set_opt=None):
-    '''
-
-    :param shuf_file:
-    :param genomes_file:
-    :param output:
-    :param set_opt:
-    :return:
-    '''
     if shuf_file is not None and genomes_file is not None and output is not None:
         if not os.path.exists(genomes_file):
             print('No such file or directory: ', genomes_file)
             return False
         if set_opt is None:
             set_opt = False
-        for filename in os.listdir(genomes_file):
-            if not toolutils.allowed_file(filename):
-                print('Genome format error for file:', filename)
-                return False
+        if not toolutils.allowed_file(genomes_file):
+            for filename in os.listdir(genomes_file):
+                if not toolutils.allowed_file(filename):
+                    print('Genome format error for file:', filename)
+                    return False
         if not os.path.exists(shuf_file):
             if shuf_file in ['L3K9.shuf']:
                 print('Downloading...', shuf_file)
@@ -90,14 +74,6 @@ def sketch(shuf_file=None, genomes_file=None, output=None, set_opt=None):
 
 
 def dist(ref_sketch=None, qry_sketch=None, output=None, flag=None):
-    """
-
-    :param ref_sketch:
-    :param qry_sketch:
-    :param output:
-    :param flag:
-    :return:
-    """
     if ref_sketch is not None and qry_sketch is not None and output is not None:
         if not os.path.exists(ref_sketch):
             print('No such file or directory: ', ref_sketch)
@@ -132,15 +108,6 @@ def dist(ref_sketch=None, qry_sketch=None, output=None, flag=None):
 
 
 def retrieve(ref_sketch=None, qry_sketch=None, output=None, N=None, method=None):
-    """
-
-    :param ref_sketch:
-    :param qry_sketch:
-    :param output:
-    :param N:
-    :param method:
-    :return:
-    """
     if ref_sketch is not None and qry_sketch is not None and output is not None:
         if method is None:
             method = 'nj'
@@ -175,13 +142,6 @@ def retrieve(ref_sketch=None, qry_sketch=None, output=None, N=None, method=None)
 
 
 def build(phylip=None, output=None, method=None):
-    """
-
-    :param phylip:
-    :param output:
-    :param method:
-    :return:
-    """
     if phylip is not None:
         if not os.path.exists(phylip):
             print('No such file or directory: ', phylip)
@@ -226,13 +186,6 @@ def build(phylip=None, output=None, method=None):
 
 
 def visualize(newick=None, taxonomy=None, mode=None):
-    """
-
-    :param newick:
-    :param taxonomy:
-    :param mode:
-    :return:
-    """
     if newick is not None:
         if not os.path.exists(newick):
             print('No such file or directory: ', newick)
@@ -246,12 +199,6 @@ def visualize(newick=None, taxonomy=None, mode=None):
 
 
 def union(ref_sketch=None, output=None):
-    """
-
-    :param ref_sketch:
-    :param output:
-    :return:
-    """
     if ref_sketch is not None and output is not None:
         if not os.path.exists(ref_sketch):
             print('No such file or directory: ', ref_sketch)
@@ -263,14 +210,6 @@ def union(ref_sketch=None, output=None):
 
 
 def subtract(ref_sketch=None, genomes_sketch=None, output=None, flag=None):
-    """
-
-    :param ref_sketch:
-    :param genomes_sketch:
-    :param output:
-    :param flag:
-    :return:
-    """
     if ref_sketch is not None and genomes_sketch is not None and output is not None:
         if not os.path.exists(ref_sketch):
             print('No such file or directory: ', ref_sketch)
@@ -324,18 +263,6 @@ def subtract(ref_sketch=None, genomes_sketch=None, output=None, flag=None):
 
 
 def quick(shuf_file=None, genomes_file=None, output=None, reference=None, taxonomy=None, method='nj', mode='r', N=0):
-    """
-
-    :param shuf_file:
-    :param genomes_file:
-    :param output:
-    :param reference:
-    :param taxonomy:
-    :param method:
-    :param mode:
-    :param N:
-    :return:
-    """
     if reference is None and taxonomy is None:
         if shuf_file is not None and genomes_file is not None and output is not None:
             timeStamp = int(time.mktime(time.localtime(time.time())))
