@@ -226,7 +226,6 @@ def view_tree(newick, taxonomy, mode):
         # t.render("bubble_map.png", w=600, dpi=300, tree_style=ts)
         t.show(tree_style=ts)
 
-
 def deal_gtdb_txt(temp_dist_output):
     data = pd.read_csv(temp_dist_output, delimiter='\t', header=None, skiprows=1)
     column_2 = data.iloc[:, 1]

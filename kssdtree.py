@@ -9,6 +9,7 @@ import time
 import requests
 
 
+
 def shuffle(k=None, s=None, l=None, o=None):
     '''
     generates .shuf file.
