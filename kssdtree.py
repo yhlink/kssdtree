@@ -13,15 +13,15 @@ def shuffle(k=None, s=None, l=None, o=None):
     kssd.write_dim_shuffle_file(k, s, l, o)
 
 
-def sketch(shuf_file=None, genomes_file=None, output=None, set_opt=None):
-    if shuf_file is not None and genomes_file is not None and output is not None:
-        if not os.path.exists(genomes_file):
-            print('No such file or directory: ', genomes_file)
+def sketch(shuf_file=None, genome_files=None, output=None, set_opt=None):
+    if shuf_file is not None and genome_files is not None and output is not None:
+        if not os.path.exists(genome_files):
+            print('No such file or directory: ', genome_files)
             return False
         if set_opt is None:
             set_opt = False
-        if not toolutils.allowed_file(genomes_file):
-            for filename in os.listdir(genomes_file):
+        if not toolutils.allowed_file(genome_files):
+            for filename in os.listdir(genome_files):
                 if not toolutils.allowed_file(filename):
                     print('Genome format error for file:', filename)
                     return False
@@ -61,9 +61,9 @@ def sketch(shuf_file=None, genomes_file=None, output=None, set_opt=None):
         print('Sketching...')
         start = time.time()
         if set_opt:
-            kssd.dist_dispatch(shuf_file, genomes_file, output, 1, 0, 0)
+            kssd.dist_dispatch(shuf_file, genome_files, output, 1, 0, 0)
         else:
-            kssd.dist_dispatch(shuf_file, genomes_file, output, 0, 0, 0)
+            kssd.dist_dispatch(shuf_file, genome_files, output, 0, 0, 0)
         end = time.time()
         print('Sketch spend time：%.2fs' % (end - start))
         print('Sketch finished!')
@@ -209,18 +209,18 @@ def union(ref_sketch=None, output=None):
         return False
 
 
-def subtract(ref_sketch=None, genomes_sketch=None, output=None, flag=None):
-    if ref_sketch is not None and genomes_sketch is not None and output is not None:
+def subtract(ref_sketch=None, genome_sketch=None, output=None, flag=None):
+    if ref_sketch is not None and genome_sketch is not None and output is not None:
         if not os.path.exists(ref_sketch):
             print('No such file or directory: ', ref_sketch)
             return False
-        if not os.path.exists(genomes_sketch):
-            print('No such file or directory: ', genomes_sketch)
+        if not os.path.exists(genome_sketch):
+            print('No such file or directory: ', genome_sketch)
             return False
         if flag == 1:
             print('Subtracting...')
             start = time.time()
-            kssd.sketch_operate(ref_sketch, output, genomes_sketch)
+            kssd.sketch_operate(ref_sketch, output, genome_sketch)
             end = time.time()
             print('Subtract spend time：%.2fs' % (end - start))
             print('Subtract finished!')
@@ -243,7 +243,7 @@ def subtract(ref_sketch=None, genomes_sketch=None, output=None, flag=None):
             if not r:
                 print('Union error!!!')
                 return False
-            kssd.sketch_operate(temp_union_sketch, output, genomes_sketch)
+            kssd.sketch_operate(temp_union_sketch, output, genome_sketch)
             end = time.time()
             current_directory = os.getcwd()
             temp_dir = os.path.join(current_directory, temp_union_sketch)
@@ -262,14 +262,14 @@ def subtract(ref_sketch=None, genomes_sketch=None, output=None, flag=None):
         return False
 
 
-def quick(shuf_file=None, genomes_file=None, output=None, reference=None, taxonomy=None, method='nj', mode='r', N=0):
+def quick(shuf_file=None, genome_files=None, output=None, reference=None, taxonomy=None, method='nj', mode='r', N=0):
     if reference is None and taxonomy is None:
-        if shuf_file is not None and genomes_file is not None and output is not None:
+        if shuf_file is not None and genome_files is not None and output is not None:
             timeStamp = int(time.mktime(time.localtime(time.time())))
-            temp_sketch = genomes_file + '_sketch_' + str(timeStamp)
+            temp_sketch = genome_files + '_sketch_' + str(timeStamp)
             temp_phy = 'temp.phy'
             print('Step1...')
-            s1 = sketch(shuf_file=shuf_file, genomes_file=genomes_file, output=temp_sketch, set_opt=False)
+            s1 = sketch(shuf_file=shuf_file, genome_files=genome_files, output=temp_sketch, set_opt=False)
             if not s1:
                 return False
             print('Step2...')
@@ -303,7 +303,7 @@ def quick(shuf_file=None, genomes_file=None, output=None, reference=None, taxono
             return False
 
     elif reference == 'gtdbr214_sketch' and taxonomy is None:
-        if shuf_file is not None and genomes_file is not None and output is not None:
+        if shuf_file is not None and genome_files is not None and output is not None:
             if not toolutils.is_positive_integer(N):
                 print("N must >0 !!!")
                 return False
@@ -311,8 +311,8 @@ def quick(shuf_file=None, genomes_file=None, output=None, reference=None, taxono
                 print("shuffle file must be set to 'L3K9.shuf'")
                 return False
             timeStamp = int(time.mktime(time.localtime(time.time())))
-            qry_sketch = genomes_file + '_sketch_' + str(timeStamp)
-            s1 = sketch(shuf_file=shuf_file, genomes_file=genomes_file, output=qry_sketch, set_opt=True)
+            qry_sketch = genome_files + '_sketch_' + str(timeStamp)
+            s1 = sketch(shuf_file=shuf_file, genome_files=genome_files, output=qry_sketch, set_opt=True)
             if not s1:
                 return False
             s2 = retrieve(ref_sketch=reference, qry_sketch=qry_sketch, output=output, N=N, method=method)
@@ -328,11 +328,11 @@ def quick(shuf_file=None, genomes_file=None, output=None, reference=None, taxono
             print('Args error!!!')
             return False
     else:
-        if shuf_file is not None and genomes_file is not None and output is not None and method in ['nj', 'dnj']:
-            if shuf_file is not None and genomes_file is not None and output is not None and method in ['nj', 'dnj']:
+        if shuf_file is not None and genome_files is not None and output is not None and method in ['nj', 'dnj']:
+            if shuf_file is not None and genome_files is not None and output is not None and method in ['nj', 'dnj']:
                 timeStamp = int(time.mktime(time.localtime(time.time())))
                 temp_reference_sketch = 'ref_sketch_' + str(timeStamp)
-                temp_genomes_sketch = genomes_file + '_sketch_' + str(timeStamp)
+                temp_genomes_sketch = genome_files + '_sketch_' + str(timeStamp)
                 if not toolutils.allowed_file(reference):
                     cur_path = os.getcwd()
                     ref_path = os.path.join(cur_path, reference)
@@ -343,20 +343,20 @@ def quick(shuf_file=None, genomes_file=None, output=None, reference=None, taxono
                         temp_union_sketch = 'ref_union_sketch_' + str(timeStamp)
                 else:
                     temp_union_sketch = temp_reference_sketch
-                temp_subtract_sketch = genomes_file + '_subtract_sketch_' + str(timeStamp)
+                temp_subtract_sketch = genome_files + '_subtract_sketch_' + str(timeStamp)
                 temp_phy = 'temp.phy'
                 print('Step1...')
-                s1 = sketch(shuf_file=shuf_file, genomes_file=reference, output=temp_reference_sketch, set_opt=True)
+                s1 = sketch(shuf_file=shuf_file, genome_files=reference, output=temp_reference_sketch, set_opt=True)
                 if not s1:
                     return False
-                s2 = sketch(shuf_file=shuf_file, genomes_file=genomes_file, output=temp_genomes_sketch, set_opt=True)
+                s2 = sketch(shuf_file=shuf_file, genome_files=genome_files, output=temp_genomes_sketch, set_opt=True)
                 if not s2:
                     return False
                 print('Step2...')
                 s3 = union(ref_sketch=temp_reference_sketch, output=temp_union_sketch)
                 if not s3:
                     return False
-                s4 = subtract(ref_sketch=temp_union_sketch, genomes_sketch=temp_genomes_sketch,
+                s4 = subtract(ref_sketch=temp_union_sketch, genome_sketch=temp_genomes_sketch,
                               output=temp_subtract_sketch, flag=1)
                 if not s4:
                     return False
