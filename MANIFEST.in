@@ -1,0 +1,3 @@
+recursive-include kssdheaders *.h
+recursive-include njheaders *.h
+recursive-include dnjheaders *.h
