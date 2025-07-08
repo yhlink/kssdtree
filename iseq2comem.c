@@ -180,12 +180,23 @@ int reads2mco(char *seqfname, const char *co_dir, char *pipecmd) {
     printf("decomposing %s by reads is complete!\n", seqfname);
     return 1;
 }
+
+int is_gz_file(const char *seqfname) {
+    if (seqfname == NULL) return 0;
+
+    size_t len = strlen(seqfname);
+    if (len < 3) return 0;
+
+    return strcmp(seqfname + len - 3, ".gz") == 0;
+}
+
 #ifdef _WIN32
 const char gzpipe_cmd[] = "gzip -dc";
 #else
 const char gzpipe_cmd[] = "zcat -fc";
 #endif
 llong *fasta2co(char *seqfname, llong *co, char *pipecmd) {
+    printf("The fasta2co seqfname is: %s\n", seqfname);
     llong tuple = 0LLU, crvstuple = 0LLU,
             unituple, drtuple, pfilter;
     memset(co, 0LLU, hashsize * sizeof(llong));
@@ -196,7 +207,18 @@ llong *fasta2co(char *seqfname, llong *co, char *pipecmd) {
         sprintf(fas_fname, "%s %s", pipecmd, seqfname);
     else
         sprintf(fas_fname, "%s %s", gzpipe_cmd, seqfname);
-    if ((infp = popen(fas_fname, "r")) == NULL) fprintf(stderr, "fasta2co():%s", fas_fname);
+    printf("The fasta2co fas_fname is: %s\n", fas_fname);
+    if (is_gz_file(seqfname)){
+        printf(".gz format\n");
+        if ((infp = popen(fas_fname, "r")) == NULL) fprintf(stderr, "fasta2co():%s", fas_fname, "\n");
+    }else{
+        printf("not .gz format\n");
+        #ifdef _WIN32
+        if ((infp = fopen(seqfname, "r")) == NULL) fprintf(stderr, "fasta2co():%s", fas_fname, "\n");
+        #else
+        if ((infp = popen(fas_fname, "r")) == NULL) fprintf(stderr, "fasta2co():%s", fas_fname, "\n");
+        #endif
+    }
     int newLen = fread(seqin_buff, sizeof(char), READSEQ_BUFFSZ, infp);
     if (!(newLen > 0)) fprintf(stderr, "fastco():eof or fread error file=%s", seqfname);
     llong base = 1;
@@ -269,6 +291,7 @@ llong *fasta2co(char *seqfname, llong *co, char *pipecmd) {
 #define CT_MAX 0xfLLU
 
 llong *fastq2co(char *seqfname, llong *co, char *pipecmd, int Q, int M) {
+    printf("The fastq2co seqfname is: %s\n", seqfname);
     if (M >= CT_MAX) fprintf(stderr, "fastq2co(): Occurence num should smaller than %d", (int) CT_MAX);
     llong tuple = 0LLU, crvstuple = 0LLU, unituple, drtuple, pfilter;
     memset(co, 0LLU, hashsize * sizeof(llong));
@@ -278,7 +301,18 @@ llong *fastq2co(char *seqfname, llong *co, char *pipecmd, int Q, int M) {
         sprintf(fq_fname, "%s %s", pipecmd, seqfname);
     else
         sprintf(fq_fname, "%s %s", gzpipe_cmd, seqfname);
-    if ((infp = popen(fq_fname, "r")) == NULL) fprintf(stderr, "fastq2co():%s", fq_fname);
+    printf("The fastq2co fq_fname is: %s\n", fq_fname);
+    if (is_gz_file(seqfname)){
+        printf(".gz format\n");
+        if ((infp = popen(fq_fname, "r")) == NULL) fprintf(stderr, "fastq2co():%s", fq_fname, "\n");
+    }else{
+        printf("not .gz format\n");
+        #ifdef _WIN32
+        if ((infp = fopen(seqfname, "r")) == NULL) fprintf(stderr, "fastq2co():%s", fq_fname, "\n");
+        #else
+        if ((infp = popen(fq_fname, "r")) == NULL) fprintf(stderr, "fastq2co():%s", fq_fname, "\n");
+        #endif
+    }
     char *seq = malloc(LEN + 10);
     char *qual = malloc(LEN + 10);
     fgets(seq, LEN, infp);
@@ -354,6 +388,7 @@ llong *fastq2co(char *seqfname, llong *co, char *pipecmd, int Q, int M) {
 #define OCCRC_MAX 0xffffLLU
 
 llong *fastq2koc(char *seqfname, llong *co, char *pipecmd, int Q) {
+    printf("The fastq2koc seqfname is: %s\n", seqfname);
     llong tuple = 0LLU, crvstuple = 0LLU, unituple, drtuple, pfilter;
     memset(co, 0LLU, hashsize * sizeof(llong));
     FILE *infp;
@@ -362,7 +397,18 @@ llong *fastq2koc(char *seqfname, llong *co, char *pipecmd, int Q) {
         sprintf(fq_fname, "%s %s", pipecmd, seqfname);
     else
         sprintf(fq_fname, "%s %s", gzpipe_cmd, seqfname);
-    if ((infp = popen(fq_fname, "r")) == NULL) fprintf(stderr, "fastq2koc():%s", fq_fname);
+    printf("The fastq2koc fq_fname is: %s\n", fq_fname);
+    if (is_gz_file(seqfname)){
+        printf(".gz format\n");
+        if ((infp = popen(fq_fname, "r")) == NULL) fprintf(stderr, "fastq2koc():%s", fq_fname, "\n");
+    }else{
+        printf("not .gz format\n");
+        #ifdef _WIN32
+        if ((infp = fopen(seqfname, "r")) == NULL) fprintf(stderr, "fastq2koc():%s", fq_fname, "\n");
+        #else
+        if ((infp = popen(fq_fname, "r")) == NULL) fprintf(stderr, "fastq2koc():%s", fq_fname, "\n");
+        #endif
+    }
     char *seq = malloc(LEN + 10);
     char *qual = malloc(LEN + 10);
     fgets(seq, LEN, infp);

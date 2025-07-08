@@ -121,10 +121,16 @@ int create_matrix(char *input_name, char *output_name, int flag) {
             for (int j = 0; j <= i; j++)
                 distances[i][j] = 0.0;
         }
-    } else {
+    } else if (flag == 1) {
         for (int i = 0; i < num_seqs; i++) {
             distances[i] = malloc(i * sizeof(double));
             for (int j = 0; j < i; j++)
+                distances[i][j] = 0.0;
+        }
+    } else {
+        for (int i = 0; i < num_seqs; i++) {
+            distances[i] = malloc(num_seqs * sizeof(double));
+            for (int j = 0; j < num_seqs; j++)
                 distances[i][j] = 0.0;
         }
     }
@@ -144,12 +150,22 @@ int create_matrix(char *input_name, char *output_name, int flag) {
                 j += 1;
             }
         }
-    } else {
+    } else if (flag == 1) {
         while (fgets(line, PATHLEN, fp) != NULL) {
             sscanf(line, "%*s %*s %*s %*s %lf", &distance);
             if (j < i) {
                 distances[i][j] = distance;
             }
+            i += 1;
+            if (i == num_seqs && j < num_seqs) {
+                i = 0;
+                j += 1;
+            }
+        }
+    } else {
+        while (fgets(line, PATHLEN, fp) != NULL) {
+            sscanf(line, "%*s %*s %*s %*s %lf", &distance);
+            distances[i][j] = distance;
             i += 1;
             if (i == num_seqs && j < num_seqs) {
                 i = 0;
@@ -187,13 +203,21 @@ int create_matrix(char *input_name, char *output_name, int flag) {
             }
             fprintf(fo, "\n");
         }
-    } else {
+    } else if (flag == 1) {
         for (int i = 0; i < num_seqs; i++) {
             fprintf(fo, "%s\t", seq_names[i]);
             for (int j = 0; j < num_seqs; j++) {
                 if (j < i) {
                     fprintf(fo, "%.6f\t", distances[i][j]);
                 }
+            }
+            fprintf(fo, "\n");
+        }
+    } else {
+        for (int i = 0; i < num_seqs; i++) {
+            fprintf(fo, "%s\t", seq_names[i]);
+            for (int j = 0; j < num_seqs; j++) {
+                fprintf(fo, "%.6f\t", distances[i][j]);
             }
             fprintf(fo, "\n");
         }
@@ -228,15 +252,16 @@ static PyObject *py_write_dim_shuffle_file(PyObject *self, PyObject *args) {
     return Py_BuildValue("i", state);
 }
 
-
 static PyObject *py_dist_dispatch(PyObject *self, PyObject *args) {
     char *str1;
     char *str2;
     char *str3;
     int flag1;
     int flag2;
+    char *str4;
+    char *str5;
     int N;
-    if (!PyArg_ParseTuple(args, "sssiii", &str1, &str2, &str3, &flag1, &N, &flag2)) {
+    if (!PyArg_ParseTuple(args, "sssiiiss", &str1, &str2, &str3, &flag1, &N, &flag2, &str4, &str5)) {
         return NULL;
     }
     if (flag1 == 0) {
@@ -283,6 +308,11 @@ static PyObject *py_dist_dispatch(PyObject *self, PyObject *args) {
         strcpy(dist_opt_val1.refpath, str2);
         strcpy(dist_opt_val1.outdir, str3);
         dist_opt_val1.num_remaining_args = 0;
+	if (strcmp(str5, "abundance") == 0) {
+                dist_opt_val1.abundance = true;
+        } else {
+                dist_opt_val1.abundance = false;
+        }
         dist_opt_val1.remaining_args = NULL;
 #ifdef _OPENMP
         if(dist_opt_val1.p == 0)
@@ -341,6 +371,11 @@ static PyObject *py_dist_dispatch(PyObject *self, PyObject *args) {
         strcpy(dist_opt_val2.outdir, str3);
         dist_opt_val2.num_remaining_args = 1;
         dist_opt_val2.remaining_args = &str2;
+	if (strcmp(str5, "abundance") == 0) {
+                dist_opt_val2.abundance = true;
+        } else {
+                dist_opt_val2.abundance = false;
+        }
 #ifdef _OPENMP
         if(dist_opt_val2.p == 0)
             dist_opt_val2.p = omp_get_num_procs();
@@ -394,6 +429,16 @@ static PyObject *py_dist_dispatch(PyObject *self, PyObject *args) {
         dist_opt_val3.num_remaining_args = 1;
         dist_opt_val3.remaining_args = &str3;
         dist_opt_val3.num_neigb = N;
+	if (strcmp(str4, "mash") == 0) {
+		dist_opt_val3.metric = 0;
+	} else {
+		dist_opt_val3.metric = 1;
+	}
+	if (strcmp(str5, "abundance") == 0) {
+                dist_opt_val3.abundance = true;
+        } else {
+                dist_opt_val3.abundance = false;
+        }
 #ifdef _OPENMP
         if(dist_opt_val3.p == 0)
             dist_opt_val3.p = omp_get_num_procs();
@@ -460,6 +505,11 @@ static PyObject *py_dist_dispatch(PyObject *self, PyObject *args) {
         dist_opt_val4.num_remaining_args = 2;
         dist_opt_val4.remaining_args[0] = str2;
         dist_opt_val4.remaining_args[1] = str3;
+	if (strcmp(str5, "abundance") == 0) {
+                dist_opt_val4.abundance = true;
+        } else {
+                dist_opt_val4.abundance = false;
+        }
 #ifdef _OPENMP
         if(dist_opt_val4.p == 0)
             dist_opt_val4.p = omp_get_num_procs();
@@ -484,7 +534,6 @@ static PyObject *py_dist_dispatch(PyObject *self, PyObject *args) {
     str3 = NULL;
     return Py_BuildValue("i", 1);
 }
-
 
 static PyObject *py_sketch_union(PyObject *self, PyObject *args) {
     char *i;

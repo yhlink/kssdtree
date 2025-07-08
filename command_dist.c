@@ -309,7 +309,7 @@ const char *test_get_fullpath(const char *parent_path, const char *dstat_f) {
         return NULL;
 };
 
-const char gzpipe_cmc[] = "gzip -f";
+//const char gzpipe_cmc[] = "gzip -f";
 
 const char *run_stageI(dist_opt_val_t *opt_val, infile_tab_t *seqfile_stat,
                        int *shuffled_seqfname_ind, const char *co_dir, int p_fit_mem) {
@@ -327,18 +327,18 @@ const char *run_stageI(dist_opt_val_t *opt_val, infile_tab_t *seqfile_stat,
         }
     } else {
         int num_threads = seqfile_stat->infile_num > p_fit_mem ? p_fit_mem : 1;
-#ifdef _WIN32
-//        printf("Windows\n");
-        for (int i = 0; i < seqfile_stat->infile_num; i++) {
-            char fas_fname[PATHLEN];
-            char *seqfname = seqfile_stat->organized_infile_tab[shuffled_seqfname_ind[i]].fpath;
-            if (strstr(seqfname, ".gz") == NULL) {
-                sprintf(fas_fname, "%s %s", gzpipe_cmc, seqfname);
-                popen(fas_fname, "r");
-                seqfile_stat->organized_infile_tab[shuffled_seqfname_ind[i]].fpath = strcat(seqfname, ".gz");
-            }
-        }
-#endif
+//#ifdef _WIN32
+//      printf("Windows\n");
+//        for (int i = 0; i < seqfile_stat->infile_num; i++) {
+//            char fas_fname[PATHLEN];
+//            char *seqfname = seqfile_stat->organized_infile_tab[shuffled_seqfname_ind[i]].fpath;
+//            if (strstr(seqfname, ".gz") == NULL) {
+//                sprintf(fas_fname, "%s %s", gzpipe_cmc, seqfname);
+//                popen(fas_fname, "r");
+//                seqfile_stat->organized_infile_tab[shuffled_seqfname_ind[i]].fpath = strcat(seqfname, ".gz");
+//            }
+//        }
+//#endif
 #pragma omp parallel for num_threads(num_threads) reduction(+:all_ctx_ct) schedule(guided)
         for (int i = 0; i < seqfile_stat->infile_num; i++) {
             int tid = 0;

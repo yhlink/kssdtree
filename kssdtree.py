@@ -28,23 +28,19 @@ def sketch(shuf_file=None, genome_files=None, output=None, set_opt=None):
         if not os.path.exists(shuf_file):
             if shuf_file in ['L3K9.shuf', './L3K9.shuf', 'L3K10.shuf', './L3K10.shuf']:
                 print('Downloading...', shuf_file)
-                import http.client
-                http.client.HTTPConnection._http_vsn = 10
-                http.client.HTTPConnection._http_vsn_str = 'HTTP/1.0'
+                start_time = time.time()
                 if shuf_file == 'L3K9.shuf' or shuf_file == './L3K9.shuf':
                     url = 'https://zenodo.org/records/12699159/files/L3K9.shuf?download=1'
                 else:
                     url = 'https://zenodo.org/records/12699159/files/L3K10.shuf?download=1'
-                start_time = time.time()
-                response = requests.get(url, stream=True)
-                with open(shuf_file, 'wb') as file:
-                    for chunk in response.iter_content(chunk_size=1024):
-                        if chunk:
-                            file.write(chunk)
+                headers = {'Accept-Encoding': 'gzip, deflate'}
+                response = requests.get(url, headers=headers, stream=True)
+                with open(shuf_file, 'wb') as f:
+                    for chunk in response.iter_content(chunk_size=8192):
+                        f.write(chunk)
                 end_time = time.time()
-                if end_time - start_time > 120:
-                    print(
-                        "Network timeout, please manually download from https://zenodo.org/records/12699159")
+                if end_time - start_time > 200:
+                    print("Network timeout, please manually download from https://zenodo.org/records/12699159")
                     return False
                 print('Download finished: ', shuf_file)
             elif shuf_file in ['L2K8.shuf', 'L2K9.shuf', 'L3K11.shuf', './L2K8.shuf', './L2K9.shuf', './L3K11.shuf']:
@@ -64,9 +60,9 @@ def sketch(shuf_file=None, genome_files=None, output=None, set_opt=None):
         print('Sketching...')
         start = time.time()
         if set_opt:
-            kssd.dist_dispatch(shuf_file, genome_files, output, 1, 0, 0)
+            kssd.dist_dispatch(shuf_file, genome_files, output, 1, 0, 0, '', '')
         else:
-            kssd.dist_dispatch(shuf_file, genome_files, output, 0, 0, 0)
+            kssd.dist_dispatch(shuf_file, genome_files, output, 0, 0, 0, '', '')
         end = time.time()
         print('Sketch spend time：%.2fs' % (end - start))
         print('Sketch finished!')
@@ -76,16 +72,16 @@ def sketch(shuf_file=None, genome_files=None, output=None, set_opt=None):
         return False
 
 
-def dist(genome_sketch=None, output=None, flag=None):
+def dist(genome_sketch=None, output=None, metric=None, flag=None):
     if genome_sketch is not None and output is not None:
         if not os.path.exists(genome_sketch):
             print('No such file or directory: ', genome_sketch)
             return False
-        # if not os.path.exists(qry_sketch):
-        #     print('No such file or directory: ', qry_sketch)
-        #     return False
         if flag is None:
             flag = 0
+        if metric is None:
+            metric = 'mash'
+
         print('Disting...')
         start = time.time()
         if '/' in output:
@@ -97,17 +93,42 @@ def dist(genome_sketch=None, output=None, flag=None):
         else:
             output_name = output
         if output_name.endswith(".phy") or output_name.endswith(".phylip"):
-            kssd.dist_dispatch(genome_sketch, output, genome_sketch, 2, 0, flag)
-            end = time.time()
-            print('Dist spend time：%.2fs' % (end - start))
-            print('Dist finished!')
-            return True
+            if metric not in ['mash', 'aaf']:
+                print('Metric type error, only supports mash or aaf distance')
+                return False
+            else:
+                kssd.dist_dispatch(genome_sketch, output, genome_sketch, 2, 0, flag, metric, '')
+                end = time.time()
+                print('Dist spend time：%.2fs' % (end - start))
+                print('Dist finished!')
+                return True
         else:
             print('Output type error, only supports .phylip (.phy) format:', output_name)
             return False
     else:
         print('Args error!!!')
         return False
+
+
+def combine(genome_sketch1=None, genome_sketch2=None, output=None):
+    if genome_sketch1 is not None and genome_sketch2 is not None and output is not None:
+        if not os.path.exists(genome_sketch1):
+            print('No such file or directory: ', genome_sketch1)
+            return False
+        if not os.path.exists(genome_sketch2):
+            print('No such file or directory: ', genome_sketch2)
+            return False
+        kssd.dist_dispatch(output, genome_sketch1, genome_sketch2, 3, 0, 0, '', '')
+        return True
+
+
+def getlist(genome_sketch=None, output=None):
+    if genome_sketch is not None and output is not None:
+        if not os.path.exists(genome_sketch):
+            print('No such file or directory: ', genome_sketch)
+            return False
+        kssd.print_gnames(genome_sketch, output)
+        return True
 
 
 def retrieve(database=None, genome_sketch=None, output=None, N=None, method=None):
@@ -143,7 +164,7 @@ def retrieve(database=None, genome_sketch=None, output=None, N=None, method=None
             print('Retrieve finished!')
             return True
         else:
-            print("database only support 'gtdbr214'")
+            print('Only support gtdbr214 database!!!')
             return False
     else:
         print('Args error!!!')
@@ -315,7 +336,6 @@ def quick(shuf_file=None, genome_files=None, output=None, reference=None, databa
             if not s3:
                 return False
             print('Step4...')
-            print('Tree visualization finished!')
             visualize(newick=output, mode=mode)
             if platform.system() == 'Linux':
                 current_directory = os.getcwd()
@@ -346,7 +366,6 @@ def quick(shuf_file=None, genome_files=None, output=None, reference=None, databa
             s2 = retrieve(database=database, genome_sketch=qry_sketch, output=output, N=N, method=method)
             if not s2:
                 return False
-            print('Tree visualization finished!')
             visualize(newick=os.path.join(output, 'output.newick'),
                       taxonomy=os.path.join(output, 'output_accession_taxonomy.txt'), mode=None)
             if platform.system() == 'Linux':
@@ -357,6 +376,74 @@ def quick(shuf_file=None, genome_files=None, output=None, reference=None, databa
                     shutil.rmtree(temp_dir1)
                 if os.path.exists(temp_dir2):
                     os.remove(temp_dir2)
+        else:
+            print('Args error, please see https://kssdtree.readthedocs.io/en/latest!!!')
+            return False
+    elif reference is None and database != 'gtdbr214':
+        if shuf_file is not None and genome_files is not None and output is not None:
+            if toolutils.is_positive_integer(N) or toolutils.is_negative_integer(N):
+                print("N must = 0 !!!")
+                return False
+            if not os.path.exists(database):
+                print('No such file or directory: ', database)
+                return False
+            if '/' in output:
+                output_dir = os.path.dirname(output)
+                output_name = output.split('/')[-1]
+                if not os.path.exists(output_dir):
+                    os.makedirs(output_dir)
+                    print("Created directory:", output_dir)
+            else:
+                output_name = output
+            if output_name.endswith(".newick"):
+                timeStamp = int(time.mktime(time.localtime(time.time())))
+                qry_sketch = toolutils.rs() + '_sketch_' + str(timeStamp)
+                temp_combine_sketch = toolutils.rs() + '_combine_sketch_' + str(timeStamp)
+                temp_phy = toolutils.rs() + '.phy'
+                s1 = sketch(shuf_file=shuf_file, genome_files=genome_files, output=qry_sketch, set_opt=True)
+                if not s1:
+                    return False
+                print('Step2...')
+                combine(genome_sketch1=database, genome_sketch2=qry_sketch, output=temp_combine_sketch)
+                if method == 'nj':
+                    s2 = dist(genome_sketch=temp_combine_sketch, output=temp_phy, flag=0)
+                else:
+                    s2 = dist(genome_sketch=temp_combine_sketch, output=temp_phy, flag=1)
+                if not s2:
+                    return False
+                print('Step3...')
+                s3 = build(phylip=temp_phy, output=output, method=method)
+                if not s3:
+                    return False
+                print('Step4...')
+                getlist(genome_sketch=database, output='ref.txt')
+                getlist(genome_sketch=qry_sketch, output='qry.txt')
+                with open('ref.txt', 'r') as ref_file:
+                    ref_lines = ref_file.readlines()
+                with open('qry.txt', 'r') as qry_file:
+                    qry_lines = qry_file.readlines()
+                with open('ref_qry.txt', 'w') as result_file:
+                    for line in ref_lines:
+                        new_name = toolutils.rename_genome(line.strip())
+                        result_file.write(new_name + '\tReference\n')
+                    for line in qry_lines:
+                        new_name = toolutils.rename_genome(line.strip())
+                        result_file.write(new_name + '\tUnknown\n')
+                os.remove('ref.txt')
+                os.remove('qry.txt')
+                os.remove(temp_phy)
+                visualize(newick=output, taxonomy='ref_qry.txt', mode='r')
+                if platform.system() == 'Linux':
+                    current_directory = os.getcwd()
+                    temp_dir1 = os.path.join(current_directory, qry_sketch)
+                    if os.path.exists(temp_dir1):
+                        shutil.rmtree(temp_dir1)
+                    temp_dir2 = os.path.join(current_directory, temp_combine_sketch)
+                    if os.path.exists(temp_dir2):
+                        shutil.rmtree(temp_dir2)
+            else:
+                print('Output type error, only supports .newick format:', output_name)
+                return False
         else:
             print('Args error, please see https://kssdtree.readthedocs.io/en/latest!!!')
             return False
@@ -417,7 +504,6 @@ def quick(shuf_file=None, genome_files=None, output=None, reference=None, databa
             if not s6:
                 return False
             print('Step5...')
-            print('Tree visualization finished!')
             visualize(newick=output, mode=mode)
             if platform.system() == 'Linux':
                 current_directory = os.getcwd()
