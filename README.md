@@ -54,14 +54,14 @@ kssdtree.quick(shuf_file='./shuf_files/L3K10.shuf', genome_files='your input gen
 
 ```
 import kssdtree
-kssdtree.quick(shuf_file='./shuf_files/L3K10.shuf', genome_files='your input genomes path', output='output.newick', reference='your reference genome path', method='nj', mode='r')
+kssdtree.quick(shuf_file='L3K10.shuf', genome_files='your input genomes path', output='output.newick', reference='your reference genome path', method='nj', mode='r')
 ```
 ## 2.3 GTDB-based Phylogenetic Placement Pipeline
 
 ```
 import kssdtree
-kssdtree.quick(shuf_file='./shuf_files/L3K9.shuf', genome_files='your input genomes path', output='your output path', database='gtdbr214', method='nj', mode='r', N=30)
+kssdtree.quick(shuf_file='L3K9.shuf', genome_files='your input genomes path', output='your output path', database='gtdbr214', method='nj', mode='r', N=30)
 ```
-For 'L3K10.shuf' and 'L3K9.shuf', they can be downloaded automatically. We have updated the version 2.0.8 of kssdtree to ensure that it can be downloaded completely. If the automatic download fails, you can manually download them from https://zenodo.org/records/12699159. For other .shuf files, such as L2K8, etc., kssdtree will be generated automatically. More usages about Kssdtree, please see Kssdtree documentation (https://kssdtree.readthedocs.io/en/latest).
+For 'L3K10.shuf' and 'L3K9.shuf', they can be downloaded automatically. We have updated the version 2.0.8 of kssdtree to ensure that it can be downloaded completely. If the automatic download fails, you can manually download them from https://zenodo.org/records/12699159. For other '*.shuf' files, such as 'L2K8.shuf', etc., kssdtree will be generated automatically by shuffle function. More usages about Kssdtree, please see Kssdtree documentation (https://kssdtree.readthedocs.io/en/latest).
 # 3. How to cite
 Hang Yang, Xiaoxin Lu, Jiaxing Chang, Qing Chang, Wen Zheng, Zehua Chen, Huiguang Yi, Kssdtree: an interactive Python package for phylogenetic analysis based on sketching technique, Bioinformatics, Volume 40, Issue 10, October 2024, btae566, https://doi.org/10.1093/bioinformatics/btae566
