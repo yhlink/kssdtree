@@ -1,10 +1,10 @@
 #  Kssdtree: an interactive Python package for phylogenetic analysis based on sketching technique
 Kssdtree is a versatile Python package for phylogenetic analysis, offering three distinct pipelines: the Routine Pipeline, the Reference Subtraction Pipeline, and the GTDB-based Phylogenetic Placement Pipeline.
 
+(1) Routine Pipeline: A general-purpose tool for phylogenetic analysis of user genomic data.
+(2) Reference Subtraction Pipeline: Designed for intra-species phylogenomic analysis.
+(3)GTDB-based Phylogenetic Placement Pipeline: Facilitates the search for similar genomes in the Genome Taxonomy Database (GTDB), conducting phylogenetic analysis alongside these genomes and positioning the input genomes within the entire prokaryotic tree of life.
 
-Routine Pipeline: A general-purpose tool for phylogenetic analysis of user genomic data.
-Reference Subtraction Pipeline: Designed for intra-species phylogenomic analysis.
-GTDB-based Phylogenetic Placement Pipeline: Facilitates the search for similar genomes in the Genome Taxonomy Database (GTDB), conducting phylogenetic analysis alongside these genomes and positioning the input genomes within the entire prokaryotic tree of life.
 Kssdtree also provides one-stop tree construction and visualization. It can handle DNA sequences in both fasta and fastq formats, whether gzipped or not. Additionally, Kssdtree is compatible with multiple platforms (Linux, MacOS, and Windows) and can be run using Jupyter notebooks.
 # 1. Installation 
 Kssdtree requires the Python 3 environment and the dependent packages pandas, pyqt5, ete3, and requests. If Kssdtree is installed using the pip command, these dependencies will be installed automatically. For MacOS, it requires Python 3.8 or higher version. For Windows, it requires Python 3.6 version and the installation of the gzip tool(https://gnuwin32.sourceforge.net/packages/gzip.htm) for sequence decompression.
