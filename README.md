@@ -7,7 +7,7 @@ Kssdtree is a versatile Python package for phylogenetic analysis, offering three
 
 Kssdtree also provides one-stop tree construction and visualization. It can handle DNA sequences in both fasta and fastq formats, whether gzipped or not. Additionally, Kssdtree is compatible with multiple platforms (Linux, MacOS, and Windows) and can be run using Jupyter notebooks.
 # 1. Installation 
-Kssdtree requires the Python 3 environment and the dependent packages pandas, pyqt5, ete3, and requests. If Kssdtree is installed using the pip command, these dependencies will be installed automatically. For MacOS, it requires Python 3.8 or higher version. For Windows, it requires Python 3.6 version and the installation of the gzip tool(https://gnuwin32.sourceforge.net/packages/gzip.htm) for sequence decompression.
+Kssdtree requires the Python 3 environment and the dependent packages pandas, pyqt5, ete3, and requests. If kssdtree is installed using the pip command, these dependencies will be installed automatically. For MacOS, it requires Python 3.8 or higher version. For Windows, it requires Python 3.6 version and the installation of the gzip tool (https://gnuwin32.sourceforge.net/packages/gzip.htm) for sequence decompression.
 ## 1.1 Linux
 
 ```
