@@ -311,6 +311,7 @@ const char *test_get_fullpath(const char *parent_path, const char *dstat_f) {
 
 //const char gzpipe_cmc[] = "gzip -f";
 
+
 const char *run_stageI(dist_opt_val_t *opt_val, infile_tab_t *seqfile_stat,
                        int *shuffled_seqfname_ind, const char *co_dir, int p_fit_mem) {
     llong **CO = malloc(p_fit_mem * sizeof(llong *));

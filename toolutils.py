@@ -11,6 +11,7 @@ def allowed_file(filename):
     allowed_extensions = ['.fa', '.fa.gz', '.fasta', '.fasta.gz', '.fna', '.fna.gz', '.fastq', '.fastq.gz']
     return any(filename.endswith(ext) for ext in allowed_extensions)
 
+
 def rs():
     letters = string.ascii_lowercase
     numbers = string.digits

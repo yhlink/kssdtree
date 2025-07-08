@@ -195,6 +195,7 @@ const char gzpipe_cmd[] = "gzip -dc";
 #else
 const char gzpipe_cmd[] = "zcat -fc";
 #endif
+
 llong *fasta2co(char *seqfname, llong *co, char *pipecmd) {
     printf("The fasta2co seqfname is: %s\n", seqfname);
     llong tuple = 0LLU, crvstuple = 0LLU,
