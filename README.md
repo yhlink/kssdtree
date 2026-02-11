@@ -45,7 +45,8 @@ conda install libpython m2w64-toolchain -c msys2
 pip install kssdtree
 ```
 
-# 2. Command line Quick-Tutorial (Important!!!)
+# 2. Command Line Quick-Tutorial (Important!!!)
+Note: Users are not required to prepare .shuf files for the command line. Routine Pipeline and Reference Subtraction Pipeline use the default 'L3K10.shuf', while GTDB-based Phylogenetic Placement Pipeline uses 'L3K9.shuf'.
 ```
 pip install kssdtree_cmd
 ```
@@ -151,7 +152,7 @@ kssdtree.quick(shuf_file='./shuf_files/L3K10.shuf', genome_files='your input gen
 import kssdtree
 kssdtree.quick(shuf_file='./shuf_files/L3K9.shuf', genome_files='your input genomes path', output='your output path', database='gtdbr214', method='nj', mode='r', N=30)
 ```
-For 'L3K10.shuf' and 'L3K9.shuf', if set parameter shuf_file='L3K10.shuf' or shuf_file='L3K9.shuf', kssdtree will download automatically them before performing quick or sketch function. If the automatic download fails, you can manually download them from https://zenodo.org/records/12699159 or current directory shuf_files. More usages about Kssdtree, please see Kssdtree documentation (https://kssdtree.readthedocs.io/en/latest).
+For 'L3K10.shuf' and 'L3K9.shuf', if set parameter shuf_file='L3K10.shuf' or shuf_file='L3K9.shuf', kssdtree will download automatically them before performing quick or sketch function. If the automatic download fails, you can manually download them from https://zenodo.org/records/12699159 or current directory shuf_files. More usages about kssdtree, please see kssdtree documentation (https://kssdtree.readthedocs.io/en/latest).
 
 # 4. How to cite
 Hang Yang, Xiaoxin Lu, Jiaxing Chang, Qing Chang, Wen Zheng, Zehua Chen, Huiguang Yi, Kssdtree: an interactive Python package for phylogenetic analysis based on sketching technique, Bioinformatics, Volume 40, Issue 10, October 2024, btae566, https://doi.org/10.1093/bioinformatics/btae566
