@@ -1,9 +1,6 @@
-import sys
 from setuptools import setup, Extension, find_packages
 from os import environ
 from setuptools.command.install import install
-import os
-
 from setuptools.command.build_ext import build_ext
 import sys, os, subprocess
 

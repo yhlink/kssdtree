@@ -102,6 +102,7 @@ optional arguments:
                         
 Example: kssdtree subtract -i inputs -r reference.fasta -o output.newick
 ```
+
 ## 2.3 GTDB-based Phylogenetic Placement Pipeline
 
 ```
