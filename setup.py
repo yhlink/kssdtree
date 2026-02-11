@@ -1,33 +1,54 @@
 import sys
 from setuptools import setup, Extension, find_packages
 from os import environ
+from setuptools.command.install import install
 import os
+
+from setuptools.command.build_ext import build_ext
+import sys, os, subprocess
+
+class CustomBuildExt(build_ext):
+    def run(self):
+        super().run()
+        self.fix_rpath()
+
+    def fix_rpath(self):
+        if sys.platform != "darwin":
+            return
+
+        conda_lib = os.path.join(sys.prefix, "lib")
+
+        for ext in self.extensions:
+            so_path = self.get_ext_fullpath(ext.name)
+            if not os.path.exists(so_path):
+                continue
+
+            subprocess.run(
+                ["install_name_tool", "-delete_rpath", conda_lib, so_path],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            subprocess.run(
+                ["install_name_tool", "-delete_rpath", "@loader_path", so_path],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            subprocess.run(
+                ["install_name_tool", "-delete_rpath", "@loader_path", so_path],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+
 
 extra_compile_args = []
 extra_link_args = []
 if 'darwin' in sys.platform:
-    target_dirs = ["gcc-9", "gcc-10", "gcc-11", "gcc-12", "gcc-13", "gcc-14", "gcc-15"]
-    path = "/opt/homebrew/bin/"
-    directories = [dir for dir in os.listdir(path) if dir in target_dirs]
-    if len(directories) > 0:
-        gcc_version = directories[0]
-        if 'gcc-9' == gcc_version:
-            gcc_path = "/opt/homebrew/bin/gcc-9"
-        elif 'gcc-10' == gcc_version:
-            gcc_path = "/opt/homebrew/bin/gcc-10"
-        elif 'gcc-11' == gcc_version:
-            gcc_path = "/opt/homebrew/bin/gcc-11"
-        elif 'gcc-12' == gcc_version:
-            gcc_path = "/opt/homebrew/bin/gcc-12"
-        elif 'gcc-13' == gcc_version:
-            gcc_path = "/opt/homebrew/bin/gcc-13"
-        elif 'gcc-14' == gcc_version:
-            gcc_path = "/opt/homebrew/bin/gcc-14"
-        else:
-            gcc_path = ""
-        extra_compile_args = ['-fopenmp']
-        extra_link_args = ['-fopenmp']
-        os.environ["CC"] = gcc_path
+    extra_compile_args = ['-fopenmp']
+    extra_link_args = ['-fopenmp']
+    # clang
+    # os.environ["CC"] = '/usr/bin/gcc'
+    os.environ["CC"] = '/opt/homebrew/bin/gcc-12'
+
 else:
     if environ.get('CC') and 'clang' in environ['CC']:
         # clang
@@ -37,6 +58,7 @@ else:
         # GNU
         extra_compile_args = ['-fopenmp']
         extra_link_args = ['-fopenmp']
+
 MOD1 = 'kssd'
 MOD2 = 'nj'
 MOD3 = 'dnj'
@@ -59,6 +81,7 @@ sources2 = ['align.c',
             'buildtree.c',
             'sequence.c',
             'pynj.c']
+
 sources3 = ['bytescale.c',
             'dnj.c',
             'str.c',
@@ -78,7 +101,6 @@ include_dirs1 = ['kssdheaders']
 include_dirs2 = ['njheaders']
 include_dirs3 = ['dnjheaders']
 
-
 require_pakages = [
     'pyqt5',
     'ete3',
@@ -88,7 +110,7 @@ require_pakages = [
 
 setup(
     name='kssdtree',
-    version='2.0.8',
+    version='2.1.0',
     author='Hang Yang',
     author_email='yhlink1207@gmail.com',
     description="Kssdtree is a versatile Python package for phylogenetic analysis. It also provides one-stop tree construction and visualization. It can handle DNA sequences of both fasta or fastq format, whether gzipped or not. ",
@@ -108,6 +130,8 @@ setup(
     install_requires=require_pakages,
     dependency_links=['https://pypi.python.org/simple/'],
     zip_safe=False,
-    include_package_data=True
+    include_package_data=True,
+    cmdclass={
+        "build_ext": CustomBuildExt,
+    }
 )
-
