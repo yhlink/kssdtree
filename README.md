@@ -48,6 +48,7 @@ pip install kssdtree
 # 2. Command Line Quick-Tutorial (Important!!!)
 Note: Users are not required to prepare .shuf files for the command line. Routine Pipeline and Reference Subtraction Pipeline use the default 'L3K10.shuf', while GTDB-based Phylogenetic Placement Pipeline uses 'L3K9.shuf'.
 ```
+# Install kssdtree-cmd
 pip install kssdtree-cmd
 ```
 
